@@ -1,4 +1,4 @@
-// --- FIREBASE AUTH, 5-MIN AUTO-DELETE SHARE & SECRET LIVE UPDATER ---
+// --- FIREBASE AUTH, 5-MIN AUTO-DELETE SHARE & EASY SECRET LIVE STUDIO ---
 const firebaseConfig = {
   apiKey: "AIzaSyCe9PY5mGrSOlzLOKByFrii_7_Vjlvv0AM",
   authDomain: "pixel-8e2df.firebaseapp.com",
@@ -26,16 +26,45 @@ function getSecretPass() {
   return localStorage.getItem("ps_secret_pass") || DEFAULT_SECRET_PASS;
 }
 
-// --- 1. LIVE REMOTE CODE ENGINE (CSS + JS) ---
+// --- 1. LIVE REMOTE CODE ENGINE (HTML + CSS + JS) ---
 const liveStyleEl = document.createElement('style');
 liveStyleEl.id = 'liveRemoteStyle';
 document.head.appendChild(liveStyleEl);
+
+const liveHtmlHost = document.createElement('div');
+liveHtmlHost.id = 'liveRemoteHtmlHost';
+liveHtmlHost.style.display = 'none';
+document.body.appendChild(liveHtmlHost);
+
 let lastAppliedJsHash = '';
+let injectedOptionNodes = [];
+
+function clearInjectedLiveNodes() {
+  injectedOptionNodes.forEach(el => {
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+  });
+  injectedOptionNodes = [];
+  liveHtmlHost.innerHTML = '';
+}
+
+function mountHtmlIntoTarget(htmlString, targetSelector) {
+  if (!htmlString || !htmlString.trim()) return;
+  const temp = document.createElement('div');
+  temp.innerHTML = htmlString.trim();
+  const target = (targetSelector && document.querySelector(targetSelector)) || document.body;
+
+  Array.from(temp.children).forEach(child => {
+    target.appendChild(child);
+    injectedOptionNodes.push(child);
+  });
+}
 
 db.ref('live_update').on('value', (snap) => {
+  clearInjectedLiveNodes();
   if (!snap.exists()) {
     liveStyleEl.textContent = '';
     document.getElementById('liveCssBox').value = '';
+    document.getElementById('liveHtmlBox').value = '';
     document.getElementById('liveJsBox').value = '';
     return;
   }
@@ -43,6 +72,10 @@ db.ref('live_update').on('value', (snap) => {
   if (typeof val.css === 'string') {
     liveStyleEl.textContent = val.css;
     document.getElementById('liveCssBox').value = val.css;
+  }
+  if (typeof val.html === 'string') {
+    document.getElementById('liveHtmlBox').value = val.html;
+    mountHtmlIntoTarget(val.html, val.target || 'body');
   }
   if (typeof val.js === 'string') {
     document.getElementById('liveJsBox').value = val.js;
@@ -66,18 +99,30 @@ document.getElementById('secretTrigger').addEventListener('click', () => {
   }
 });
 
+// Custom Dark Password Popup (No White Browser Prompt)
 function openSecret() {
   if (secretUnlocked) {
     showSecretModal();
     return;
   }
-  const entered = prompt("Enter Secret Password:");
-  if (entered === null) return;
-  if (entered.trim() !== getSecretPass()) {
+  const inp = document.getElementById("customPassInput");
+  inp.value = "";
+  document.getElementById("customPassModal").classList.add("open");
+  setTimeout(() => inp.focus(), 100);
+}
+
+function closePassPopup() {
+  document.getElementById("customPassModal").classList.remove("open");
+}
+
+function verifyPassPopup() {
+  const entered = document.getElementById("customPassInput").value.trim();
+  if (entered !== getSecretPass()) {
     showToast("Wrong Password!");
     return;
   }
   secretUnlocked = true;
+  closePassPopup();
   showSecretModal();
 }
 
@@ -93,6 +138,13 @@ function closeSecret() {
   document.getElementById("secretOverlay").classList.remove("open");
 }
 
+function switchSecretTab(tab) {
+  ['add', 'style', 'code', 'pass'].forEach(t => {
+    document.getElementById('sbtn-' + t).classList.toggle('active', t === tab);
+    document.getElementById('stab-' + t).classList.toggle('active', t === tab);
+  });
+}
+
 function saveSecretPass() {
   const val = document.getElementById("newSecretPassInput").value.trim();
   if (!val || val.length < 3) return showToast("Password min 3 chars");
@@ -100,12 +152,62 @@ function saveSecretPass() {
   showToast("Secret password updated!");
 }
 
-async function publishLiveCode() {
+function applyQuickPopupTheme() {
+  const bg = document.getElementById('quickPopupBg').value;
+  const accent = document.getElementById('quickPopupAccent').value;
+  const cssBox = document.getElementById('liveCssBox');
+  const popupRule = `\n#passPopupCard { background: ${bg} !important; border-color: ${accent} !important; }\n#passPopupCard .btn { border-color: ${accent} !important; color: ${accent} !important; }`;
+  cssBox.value = (cssBox.value.replace(/\n?#passPopupCard[\s\S]*?#passPopupCard \.btn[\s\S]*?\}\n?/g, '') + popupRule).trim();
+  liveStyleEl.textContent = cssBox.value;
+}
+
+async function addQuickOptionLive() {
   if (!currentUser) return showToast('Sign in with Admin account first');
+  const target = document.getElementById('newOptionTarget').value;
+  const label = document.getElementById('newOptionLabel').value.trim();
+  const actionCode = document.getElementById('newOptionAction').value.trim();
+
+  if (!label) return showToast('Enter button / option name');
+
+  const btnId = 'liveOpt_' + Date.now();
+  const btnHtml = `<button class="btn mb-10" id="${btnId}">${label}</button>`;
+  const bindJs = actionCode
+    ? `document.getElementById('${btnId}').onclick = function() { ${actionCode} };`
+    : `document.getElementById('${btnId}').onclick = function() { showToast('${label}'); };`;
+
+  const htmlBox = document.getElementById('liveHtmlBox');
+  const jsBox = document.getElementById('liveJsBox');
+
+  htmlBox.value = (htmlBox.value + '\n' + btnHtml).trim();
+  jsBox.value = (jsBox.value + '\n' + bindJs).trim();
+
   try {
     await db.ref('live_update').set({
       css: document.getElementById('liveCssBox').value,
-      js: document.getElementById('liveJsBox').value,
+      html: htmlBox.value,
+      target: target,
+      js: jsBox.value,
+      updatedAt: Date.now()
+    });
+    lastAppliedJsHash = '';
+    document.getElementById('newOptionLabel').value = '';
+    document.getElementById('newOptionAction').value = '';
+    showToast(`Added "${label}" live!`);
+  } catch (e) {
+    showToast('Access Denied (Admin Only)');
+  }
+}
+
+async function publishLiveCode() {
+  if (!currentUser) return showToast('Sign in with Admin account first');
+  try {
+    const jsVal = document.getElementById('liveJsBox').value;
+    lastAppliedJsHash = '';
+    await db.ref('live_update').set({
+      css: document.getElementById('liveCssBox').value,
+      html: document.getElementById('liveHtmlBox').value,
+      target: document.getElementById('newOptionTarget').value || 'body',
+      js: jsVal,
       updatedAt: Date.now()
     });
     showToast('Published live to all users!');
@@ -120,6 +222,7 @@ async function clearLiveCode() {
   try {
     await db.ref('live_update').remove();
     lastAppliedJsHash = '';
+    clearInjectedLiveNodes();
     showToast('Live patch cleared');
   } catch (e) {
     showToast('Access Denied');
