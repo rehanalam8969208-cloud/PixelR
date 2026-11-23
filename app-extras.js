@@ -1,6 +1,6 @@
 (function() {
-  if (window.__pixelGitHubCoreSuiteV3) return;
-  window.__pixelGitHubCoreSuiteV3 = true;
+  if (window.__pixelGitHubCoreSuiteV4) return;
+  window.__pixelGitHubCoreSuiteV4 = true;
 
   // Remove any old brightness dim overlay from live patch
   const oldDim = document.getElementById('psSavedBrightnessOverlay');
@@ -172,7 +172,6 @@
     });
   }
 
-  // Run immediately without waiting
   applyLocalSettingsInstant();
   attachUniversalSettingsListeners();
   document.addEventListener('DOMContentLoaded', () => {
@@ -212,7 +211,7 @@
   ensureTopChatButton();
 
   // =========================================================
-  // 3. FULL-SCREEN CHAT + 8MB PHOTO (5-MIN / DOWNLOAD FIREBASE DELETE) + LOCAL AI MODE
+  // 3. FULL-SCREEN CHAT + 8MB PHOTO (5-MIN / DOWNLOAD FIREBASE DELETE) + LOCAL AI MEMORY
   // =========================================================
   const oldModal = document.getElementById('liveChatOverlay');
   if (oldModal) oldModal.remove();
@@ -227,7 +226,6 @@
   modal.innerHTML = `
     <div style="width:100%; height:100%; max-width:520px; margin:0 auto; display:flex; flex-direction:column; position:relative;">
 
-      <!-- TOP HEADER WITH AI MODE + + (ADD FRIEND) + CLOSE -->
       <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid rgba(255,255,255,0.1); background:rgba(12,15,23,0.9); flex-shrink:0; gap:8px;">
         <div style="display:flex; align-items:center; gap:8px; min-width:0;">
           <button class="icon-btn" id="chatBackToListBtn" style="display:none; width:34px; height:34px;" onclick="showFriendsListView()" aria-label="Back">
@@ -253,7 +251,6 @@
         </div>
       </div>
 
-      <!-- ADD FRIEND POPUP SHEET -->
       <div id="addFriendSheet" style="display:none; padding:14px 16px; background:rgba(18,22,34,0.98); border-bottom:1px solid rgba(255,255,255,0.14); flex-shrink:0;">
         <div class="section-label" style="margin-bottom:8px;">Add Friend by Username</div>
         <div style="display:flex; gap:8px; align-items:center;">
@@ -263,7 +260,6 @@
         </div>
       </div>
 
-      <!-- ONE-TIME PERMANENT USERNAME SETUP -->
       <div id="usernameSetupBox" style="display:none; padding:24px 18px; margin:auto 16px; border-radius:24px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.14);">
         <div class="section-label" style="text-align:center;">One-Time Permanent Username</div>
         <p style="font-size:13px; color:var(--text-secondary); text-align:center; margin:0 0 14px 0;">
@@ -277,7 +273,6 @@
         </button>
       </div>
 
-      <!-- VIEW 1: FRIENDS LIST SCREEN -->
       <div id="friendsListView" style="display:none; flex:1; overflow-y:auto; padding:14px 16px;">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
           <div class="section-label" style="margin:0;">Saved Friends List</div>
@@ -286,7 +281,6 @@
         <div id="friendsListContainer" style="display:flex; flex-direction:column; gap:10px;"></div>
       </div>
 
-      <!-- VIEW 2: FULL-SCREEN FRIEND CONVERSATION (WITH 8MB PHOTO + 5-MIN / DOWNLOAD FIREBASE DELETE) -->
       <div id="conversationView" style="display:none; flex:1; flex-direction:column; min-height:0;">
         <div style="padding:6px 16px; font-size:11px; color:var(--text-secondary); background:rgba(255,255,255,0.03); border-bottom:1px solid rgba(255,255,255,0.06); text-align:center;">
           Photos (up to 8 MB) auto-delete from Firebase in 5 mins or right after download.
@@ -307,23 +301,20 @@
         </div>
       </div>
 
-      <!-- VIEW 3: LOCAL AI MODE (CHAT + IMAGE GENERATION, 100% LOCAL STORAGE) -->
+      <!-- VIEW 3: LOCAL AI MODE WITH NAME MEMORY (100% LOCAL STORAGE) -->
       <div id="localAIModeView" style="display:none; flex:1; flex-direction:column; min-height:0;">
         <div style="padding:8px 14px; display:flex; align-items:center; justify-content:space-between; gap:8px; background:rgba(56,189,248,0.07); border-bottom:1px solid rgba(255,255,255,0.09); flex-shrink:0;">
-          <div style="font-size:11px; color:#7dd3fc;">
-            Local-Only AI (Saved on device only • Never in Firebase)
+          <div id="aiMemoryStatusLabel" style="font-size:11px; color:#7dd3fc;">
+            Local AI • Name memory: Not set yet
           </div>
-          <div style="display:flex; gap:6px;">
-            <button type="button" onclick="generateLocalAIImagePrompt()" style="padding:5px 10px; border-radius:10px; border:1px solid rgba(168,85,247,0.45); background:rgba(168,85,247,0.18); color:#e9d5ff; font-size:11px; font-weight:600; cursor:pointer;">🎨 Make Photo</button>
-            <button type="button" onclick="clearLocalAIHistory()" style="padding:5px 9px; border-radius:10px; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.06); color:var(--text-secondary); font-size:11px; cursor:pointer;">Clear</button>
-          </div>
+          <button type="button" onclick="clearLocalAIHistory()" style="padding:5px 9px; border-radius:10px; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.06); color:var(--text-secondary); font-size:11px; cursor:pointer;">Clear Chat</button>
         </div>
 
         <div id="localAIMessagesBox" style="flex:1; overflow-y:auto; padding:14px 16px; display:flex; flex-direction:column; gap:10px;"></div>
 
         <div style="padding:10px 14px 16px 14px; background:linear-gradient(to top, rgba(6,8,13,0.98) 70%, rgba(6,8,13,0)); flex-shrink:0;">
           <div style="display:flex; align-items:center; gap:8px; padding:6px 8px 6px 14px; border-radius:26px; background:rgba(255,255,255,0.08); border:1px solid rgba(56,189,248,0.32); backdrop-filter:blur(20px);">
-            <input type="text" id="localAIInput" placeholder="AI se baat karein ya photo prompt likhein..." style="flex:1; background:transparent; border:none; color:var(--text-primary); font-size:14px; padding:10px 4px; outline:none;" onkeydown="if(event.key==='Enter') sendLocalAIMessage()">
+            <input type="text" id="localAIInput" placeholder="AI se baat karein (apna naam batayein)..." style="flex:1; background:transparent; border:none; color:var(--text-primary); font-size:14px; padding:10px 4px; outline:none;" onkeydown="if(event.key==='Enter') sendLocalAIMessage()">
             <button class="btn" style="width:auto; padding:11px 16px; border-radius:20px; font-size:13px;" onclick="sendLocalAIMessage()">Ask</button>
           </div>
         </div>
@@ -341,8 +332,8 @@
   let inboxListenerRef = null;
   let isAIModeActive = false;
   const seenNotifIds = new Set();
-  const PHOTO_TTL_MS = 5 * 60 * 1000; // 5 minutes
-  const MAX_PHOTO_BYTES = 8 * 1024 * 1024; // 8 MB
+  const PHOTO_TTL_MS = 5 * 60 * 1000;
+  const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
 
   function cleanUsername(raw) {
     return (raw || '').toLowerCase().trim().replace(/^@+/, '').replace(/[^a-z0-9._]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '').slice(0, 20);
@@ -514,7 +505,6 @@
       showToast('Saved to device! Removing from Firebase...');
     } catch (e) {}
 
-    // Delete photo payload from Firebase after download (keeps local device copy)
     if (typeof db !== 'undefined' && db) {
       db.ref('chats/' + currentRoomId + '/messages/' + msgKey + '/photoData').remove().catch(() => {});
       db.ref('chats/' + currentRoomId + '/messages/' + msgKey + '/downloaded').set(true).catch(() => {});
@@ -553,8 +543,7 @@
           canvas.height = h;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, w, h);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.68);
-          resolve(dataUrl);
+          resolve(canvas.toDataURL('image/jpeg', 0.68));
         };
         img.onerror = reject;
         img.src = ev.target.result;
@@ -597,7 +586,6 @@
         createdAt: now
       });
 
-      // Schedule auto-delete from Firebase after 5 minutes
       setTimeout(() => {
         if (currentRoomId && typeof db !== 'undefined') {
           db.ref('chats/' + currentRoomId + '/messages')
@@ -698,11 +686,59 @@
   };
 
   // =========================================================
-  // 4. LOCAL-ONLY AI MODE (FREE CHAT + FREE IMAGE GEN, NO FIREBASE)
+  // 4. LOCAL-ONLY AI MODE WITH SAVED USER NAME MEMORY
   // =========================================================
   function getLocalAIKey() {
     const uid = getActiveUid() || 'guest';
-    return 'ps_local_ai_chat_v1_' + uid;
+    return 'ps_local_ai_chat_v2_' + uid;
+  }
+
+  function getSavedUserNameKey() {
+    const uid = getActiveUid() || 'guest';
+    return 'ps_local_ai_user_name_' + uid;
+  }
+
+  function getSavedUserName() {
+    try {
+      return (localStorage.getItem(getSavedUserNameKey()) || '').trim();
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function saveUserNameLocally(name) {
+    const clean = (name || '').replace(/[^\p{L}\p{N}_ -]/gu, '').trim().slice(0, 30);
+    if (!clean) return;
+    try {
+      localStorage.setItem(getSavedUserNameKey(), clean);
+    } catch (e) {}
+    updateAIMemoryLabel();
+  }
+
+  function extractNameFromUserText(text) {
+    const patterns = [
+      /(?:mera naam|my name is|i am|main|naam)\s+([a-zA-Z\u0900-\u097F]{2,25})/i
+    ];
+    for (const re of patterns) {
+      const m = text.match(re);
+      if (m && m[1]) {
+        const candidate = m[1].trim();
+        const ignoreWords = ['hoon', 'hu', 'hai', 'rehan', 'kya', 'kaise', 'ek', 'ai', 'user'];
+        if (!ignoreWords.includes(candidate.toLowerCase())) {
+          return candidate;
+        }
+      }
+    }
+    return '';
+  }
+
+  function updateAIMemoryLabel() {
+    const lbl = document.getElementById('aiMemoryStatusLabel');
+    if (!lbl) return;
+    const savedName = getSavedUserName();
+    lbl.textContent = savedName
+      ? `Local AI • Remembered name: ${savedName}`
+      : 'Local AI • Name memory: Not set yet';
   }
 
   function loadLocalAIMessages() {
@@ -720,13 +756,15 @@
   }
 
   function renderLocalAIMessages() {
+    updateAIMemoryLabel();
     const box = document.getElementById('localAIMessagesBox');
     if (!box) return;
     const list = loadLocalAIMessages();
     if (!list.length) {
+      const savedName = getSavedUserName();
       box.innerHTML = `<div style="color:var(--text-secondary); font-size:12.5px; text-align:center; margin:auto; line-height:1.5;">
-        AI Mode active hai. Kuch bhi poochein ya <strong>🎨 Make Photo</strong> se image banayein.<br>
-        Data sirf aapke phone ke local storage mein rehta hai.
+        ${savedName ? `Welcome back, <strong>${savedName}</strong>! ` : ''}AI Mode local memory ke saath ready hai.<br>
+        Apna naam batayein—AI usse apne local memory mein yaad rakhega.
       </div>`;
       return;
     }
@@ -736,11 +774,8 @@
       const isUser = m.role === 'user';
       const bubble = document.createElement('div');
       bubble.style.cssText = `max-width:84%; padding:10px 14px; border-radius:18px; font-size:13.5px; line-height:1.45; align-self:${isUser ? 'flex-end' : 'flex-start'}; background:${isUser ? 'rgba(255,255,255,0.2)' : 'rgba(56,189,248,0.12)'}; border:1px solid ${isUser ? 'rgba(255,255,255,0.16)' : 'rgba(56,189,248,0.28)'}; color:var(--text-primary); word-break:break-word;`;
-      let extra = '';
-      if (m.imageUrl) {
-        extra = `<img src="${m.imageUrl}" alt="AI Generated" style="max-width:220px; border-radius:12px; display:block; margin-top:8px;">`;
-      }
-      bubble.innerHTML = `<div style="font-size:10.5px; opacity:0.7; margin-bottom:2px;">${isUser ? 'You (Local)' : 'AI (Local)'}</div><div>${(m.text || '').replace(/</g, '&lt;')}</div>${extra}`;
+      const displayLabel = isUser ? (getSavedUserName() || 'You') : 'AI (Local)';
+      bubble.innerHTML = `<div style="font-size:10.5px; opacity:0.7; margin-bottom:2px;">${displayLabel}</div><div>${(m.text || '').replace(/</g, '&lt;')}</div>`;
       box.appendChild(bubble);
     });
     box.scrollTop = box.scrollHeight;
@@ -757,7 +792,7 @@
       document.getElementById('localAIModeView').style.display = 'flex';
       document.getElementById('chatBackToListBtn').style.display = 'flex';
       document.getElementById('fullChatHeaderTitle').textContent = 'AI Mode';
-      document.getElementById('fullChatHeaderSub').textContent = '100% Local Storage • Free Chat & Photo';
+      document.getElementById('fullChatHeaderSub').textContent = 'Local Name Memory • 100% Device Storage';
       renderLocalAIMessages();
       setTimeout(() => document.getElementById('localAIInput').focus(), 100);
     } else {
@@ -768,20 +803,7 @@
   window.clearLocalAIHistory = function() {
     localStorage.removeItem(getLocalAIKey());
     renderLocalAIMessages();
-    showToast('Local AI history cleared');
-  };
-
-  window.generateLocalAIImagePrompt = function() {
-    const inp = document.getElementById('localAIInput');
-    const prompt = (inp.value || '').trim() || 'futuristic neon city at night, 4k digital art';
-    inp.value = '';
-    const list = loadLocalAIMessages();
-    list.push({ role: 'user', text: 'Generate image: ' + prompt });
-    const seed = Math.floor(Math.random() * 999999);
-    const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?seed=${seed}&nologo=true`;
-    list.push({ role: 'ai', text: 'Local AI Image generated:', imageUrl: imgUrl });
-    saveLocalAIMessages(list);
-    renderLocalAIMessages();
+    showToast('Local chat history cleared (name memory kept)');
   };
 
   window.sendLocalAIMessage = async function() {
@@ -790,21 +812,35 @@
     if (!text) return;
     inp.value = '';
 
+    const detectedName = extractNameFromUserText(text);
+    if (detectedName) {
+      saveUserNameLocally(detectedName);
+    }
+
     const list = loadLocalAIMessages();
     list.push({ role: 'user', text: text });
     saveLocalAIMessages(list);
     renderLocalAIMessages();
 
+    const savedName = getSavedUserName();
+    const recentHistory = list.slice(-6).map((item) => `${item.role === 'user' ? 'User' : 'Assistant'}: ${item.text}`).join('\n');
+    const promptWithMemory = savedName
+      ? `Remember: The user's name is "${savedName}". Always remember their name naturally in conversation.\n\nRecent chat:\n${recentHistory}\n\nRespond concisely and helpfully.`
+      : `Recent chat:\n${recentHistory}\n\nRespond concisely and helpfully.`;
+
     try {
-      const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(text)}`);
-      const replyText = await res.text();
+      const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(promptWithMemory)}`);
+      const replyText = (await res.text() || '').trim();
       const updated = loadLocalAIMessages();
-      updated.push({ role: 'ai', text: (replyText || 'No response').trim() });
+      updated.push({ role: 'ai', text: replyText || (savedName ? `Ji ${savedName}, main aapki baat samajh gaya.` : 'Main aapki baat samajh gaya.') });
       saveLocalAIMessages(updated);
       renderLocalAIMessages();
     } catch (e) {
       const updated = loadLocalAIMessages();
-      updated.push({ role: 'ai', text: 'Free AI server reachable nahi hai abhi. Try 🎨 Make Photo ya thodi der baad try karein.' });
+      const fallback = savedName
+        ? `Ji ${savedName}, aapka naam meri local memory mein save hai, lekin abhi AI server se connect nahi ho paya.`
+        : 'Abhi AI server se connect nahi ho paya. Thodi der baad try karein.';
+      updated.push({ role: 'ai', text: fallback });
       saveLocalAIMessages(updated);
       renderLocalAIMessages();
     }
@@ -819,6 +855,7 @@
     const cached = cleanUsername(localStorage.getItem(cacheKey));
     if (cached) {
       myPermanentUsername = cached;
+      if (!getSavedUserName()) saveUserNameLocally(cached);
       startInboxWatcher(myPermanentUsername);
       return myPermanentUsername;
     }
@@ -827,6 +864,7 @@
       if (snap.exists() && snap.val()) {
         myPermanentUsername = cleanUsername(snap.val());
         localStorage.setItem(cacheKey, myPermanentUsername);
+        if (!getSavedUserName()) saveUserNameLocally(myPermanentUsername);
         startInboxWatcher(myPermanentUsername);
         return myPermanentUsername;
       }
@@ -847,6 +885,7 @@
       await db.ref('users/' + uid + '/username').set(chosen);
       myPermanentUsername = chosen;
       localStorage.setItem('ps_perm_uname_' + uid, chosen);
+      if (!getSavedUserName()) saveUserNameLocally(chosen);
       startInboxWatcher(chosen);
       enableChatNotifications();
       document.getElementById('usernameSetupBox').style.display = 'none';
@@ -955,7 +994,7 @@
     { counter: 'Tutorial 2 / 5', badge: 'DECODE • TEXT CODE TO PHOTO', title: 'Text Code se Photo wapas kaise nikalein', desc: '1. <b>Codec</b> tab mein jayein.<br>2. Wahi <b>Text Code</b> paste karein.<br>3. <b>Decode</b> button dabayein—aapki <b>asli photo wapas</b> aa jayegi.', bg: 'radial-gradient(circle at top left, rgba(168,85,247,0.25), rgba(15,23,42,0.92))', accent: '#d8b4fe' },
     { counter: 'Tutorial 3 / 5', badge: 'LOCK • PIXEL GLITCH & RESTORE', title: 'Photo ke Pixel bigaadna aur wapas sudharna', desc: '1. <b>Lock</b> tab kholein aur photo select karein.<br>2. <b>Key</b> daal kar <b>Glitch / Scramble</b> dabayein.<br>3. Wapas sahi karne ke liye wahi <b>Key</b> daal kar <b>Restore</b> dabayein.', bg: 'radial-gradient(circle at top left, rgba(244,114,182,0.25), rgba(15,23,42,0.92))', accent: '#f9a8d4' },
     { counter: 'Tutorial 4 / 5', badge: 'SHARE • 5-MINUTE CODE SHARE', title: 'Share option se file/code kaise bhejein', desc: '1. <b>Share</b> tab mein jayein aur file/code select karein.<br>2. <b>6-digit code</b> banayein.<br>3. Dusre device mein code daal kar download karein.', bg: 'radial-gradient(circle at top left, rgba(251,191,36,0.24), rgba(15,23,42,0.92))', accent: '#fde047' },
-    { counter: 'Tutorial 5 / 5', badge: 'CHAT & AI • 8MB PHOTO + LOCAL AI', title: 'Chat photo aur Local AI kaise chalayein', desc: '1. Chat mein <b>📷</b> se 8MB tak photo bhejein (5 min ya download par Firebase se delete).<br>2. Upar <b>AI Mode</b> se free chat aur photo banayein (100% local storage mein).', bg: 'radial-gradient(circle at top left, rgba(52,211,153,0.25), rgba(15,23,42,0.92))', accent: '#6ee7b7' }
+    { counter: 'Tutorial 5 / 5', badge: 'CHAT & AI • LOCAL NAME MEMORY', title: 'Chat photo aur AI Name Memory kaise chalayein', desc: '1. Chat mein <b>📷</b> se 8MB tak photo bhejein (5 min ya download par Firebase se delete).<br>2. <b>AI Mode</b> mein apna naam batayein—AI usse local memory mein yaad rakhega.', bg: 'radial-gradient(circle at top left, rgba(52,211,153,0.25), rgba(15,23,42,0.92))', accent: '#6ee7b7' }
   ];
 
   let currentTutIdx = 0;
@@ -1005,7 +1044,6 @@
     });
   }
 
-  // Auth hook for per-user settings & chat
   if (typeof auth !== 'undefined' && auth) {
     auth.onAuthStateChanged((user) => {
       ensureTopChatButton();
