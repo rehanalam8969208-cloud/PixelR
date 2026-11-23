@@ -1,87 +1,184 @@
 (function() {
-  if (window.__pixelGitHubCoreSuiteV1) return;
-  window.__pixelGitHubCoreSuiteV1 = true;
+  if (window.__pixelGitHubCoreSuiteV2) return;
+  window.__pixelGitHubCoreSuiteV2 = true;
 
   // Remove any old brightness dim overlay from live patch
   const oldDim = document.getElementById('psSavedBrightnessOverlay');
   if (oldDim) oldDim.remove();
 
   // =========================================================
-  // 1. PER-USER CLOUD & LOCAL SETTINGS (STRICTLY ISOLATED BY UID)
+  // 1. UNIVERSAL PER-USER CLOUD SETTINGS (STRICTLY BY UID)
   // =========================================================
   let currentSettingsUid = null;
-  let saveSettingsTimer = null;
+  let settingsSyncTimer = null;
+  let applyingCloudSettingsFlag = false;
 
-  function getLocalSettingsKey(uid) {
-    return 'ps_user_settings_' + (uid || 'guest');
+  function getActiveUid() {
+    if (typeof currentUser !== 'undefined' && currentUser && currentUser.uid) {
+      return currentUser.uid;
+    }
+    if (typeof auth !== 'undefined' && auth && auth.currentUser && auth.currentUser.uid) {
+      return auth.currentUser.uid;
+    }
+    return null;
   }
 
-  function applyUserSettingsLocally(settings) {
-    if (!settings || typeof settings !== 'object') return;
-    if (typeof settings.brightness === 'number' && !Number.isNaN(settings.brightness)) {
-      const rangeInputs = Array.from(document.querySelectorAll('input[type="range"]'));
-      rangeInputs.forEach((slider) => {
-        const hint = ((slider.id || '') + ' ' + (slider.name || '') + ' ' + (slider.getAttribute('aria-label') || '') + ' ' + (slider.closest('div, label')?.innerText || '')).toLowerCase();
-        if (hint.includes('bright') || hint.includes('ब्राइट') || hint.includes('dim')) {
-          if (document.activeElement !== slider && Number(slider.value) !== settings.brightness) {
-            slider.value = settings.brightness;
-            slider.dispatchEvent(new Event('input', { bubbles: true }));
-            slider.dispatchEvent(new Event('change', { bubbles: true }));
+  function getSettingsLocalKey(uid) {
+    return 'ps_cloud_settings_' + (uid || 'guest');
+  }
+
+  function collectCurrentSettingsSnapshot() {
+    const snapData = {};
+    const fields = Array.from(document.querySelectorAll('input, select, textarea'));
+
+    fields.forEach((el, idx) => {
+      if (
+        el.closest('#liveChatOverlay') ||
+        el.closest('#pixel3DGuideOverlay') ||
+        el.closest('#secretStudioOverlay') ||
+        el.closest('.secret-overlay')
+      ) {
+        return;
+      }
+      if (el.type === 'password' || el.type === 'file') return;
+
+      const key = el.id || el.name || ('field_' + el.tagName.toLowerCase() + '_' + idx);
+      if (el.type === 'checkbox') {
+        snapData[key] = { kind: 'checkbox', checked: Boolean(el.checked) };
+      } else if (el.type === 'radio') {
+        if (el.checked) {
+          const groupKey = el.name || key;
+          snapData[groupKey] = { kind: 'radio', value: el.value };
+        }
+      } else {
+        snapData[key] = { kind: 'value', value: el.value };
+      }
+    });
+
+    return snapData;
+  }
+
+  function applySettingsSnapshotToUI(snapData) {
+    if (!snapData || typeof snapData !== 'object') return;
+    applyingCloudSettingsFlag = true;
+
+    const fields = Array.from(document.querySelectorAll('input, select, textarea'));
+    fields.forEach((el, idx) => {
+      if (
+        el.closest('#liveChatOverlay') ||
+        el.closest('#pixel3DGuideOverlay') ||
+        el.closest('#secretStudioOverlay') ||
+        el.closest('.secret-overlay')
+      ) {
+        return;
+      }
+      if (el.type === 'password' || el.type === 'file') return;
+
+      const key = el.id || el.name || ('field_' + el.tagName.toLowerCase() + '_' + idx);
+      if (el.type === 'checkbox' && snapData[key] && snapData[key].kind === 'checkbox') {
+        const targetChecked = Boolean(snapData[key].checked);
+        if (el.checked !== targetChecked) {
+          el.checked = targetChecked;
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      } else if (el.type === 'radio') {
+        const groupKey = el.name || key;
+        if (snapData[groupKey] && snapData[groupKey].kind === 'radio' && el.value === snapData[groupKey].value) {
+          if (!el.checked) {
+            el.checked = true;
+            el.dispatchEvent(new Event('change', { bubbles: true }));
           }
         }
-      });
-    }
+      } else if (snapData[key] && snapData[key].kind === 'value') {
+        if (document.activeElement !== el && String(el.value) !== String(snapData[key].value)) {
+          el.value = snapData[key].value;
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    });
+
+    setTimeout(() => {
+      applyingCloudSettingsFlag = false;
+    }, 200);
   }
 
-  async function syncMySettingsToCloud(partialData) {
-    const uid = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.uid : null;
-    const key = getLocalSettingsKey(uid);
-    const existing = JSON.parse(localStorage.getItem(key) || '{}');
-    const merged = { ...existing, ...partialData, updatedAt: Date.now() };
-    localStorage.setItem(key, JSON.stringify(merged));
+  async function saveUserSettingsToFirebase() {
+    if (applyingCloudSettingsFlag) return;
+    const uid = getActiveUid();
+    if (!uid || typeof db === 'undefined' || !db) return;
 
-    // Only write to authenticated user's own node: users/{uid}/settings
-    if (uid && typeof db !== 'undefined' && db) {
+    const snapshot = collectCurrentSettingsSnapshot();
+    const payload = {
+      items: snapshot,
+      updatedAt: Date.now()
+    };
+
+    localStorage.setItem(getSettingsLocalKey(uid), JSON.stringify(payload));
+
+    try {
+      await db.ref('users/' + uid + '/settings').set(payload);
+    } catch (e) {}
+  }
+
+  async function loadUserSettingsFromFirebase(user) {
+    const uid = (user && user.uid) ? user.uid : getActiveUid();
+    if (!uid) return;
+    currentSettingsUid = uid;
+
+    const localRaw = localStorage.getItem(getSettingsLocalKey(uid));
+    if (localRaw) {
       try {
-        await db.ref('users/' + uid + '/settings').update(merged);
+        const parsedLocal = JSON.parse(localRaw);
+        if (parsedLocal && parsedLocal.items) {
+          applySettingsSnapshotToUI(parsedLocal.items);
+        }
+      } catch (e) {}
+    }
+
+    if (typeof db !== 'undefined' && db) {
+      try {
+        const snap = await db.ref('users/' + uid + '/settings').get();
+        if (snap.exists() && snap.val() && snap.val().items) {
+          const cloudPayload = snap.val();
+          localStorage.setItem(getSettingsLocalKey(uid), JSON.stringify(cloudPayload));
+          applySettingsSnapshotToUI(cloudPayload.items);
+        }
       } catch (e) {}
     }
   }
 
-  async function loadMySettingsFromCloud(user) {
-    if (!user || typeof db === 'undefined' || !db) return;
-    currentSettingsUid = user.uid;
-    const key = getLocalSettingsKey(user.uid);
-    const localSaved = JSON.parse(localStorage.getItem(key) || 'null');
-    if (localSaved) applyUserSettingsLocally(localSaved);
-
-    try {
-      const snap = await db.ref('users/' + user.uid + '/settings').get();
-      if (snap.exists() && snap.val()) {
-        const cloudSettings = snap.val();
-        localStorage.setItem(key, JSON.stringify(cloudSettings));
-        applyUserSettingsLocally(cloudSettings);
-      }
-    } catch (e) {}
+  function scheduleSettingsSave() {
+    if (applyingCloudSettingsFlag) return;
+    if (!getActiveUid()) return;
+    clearTimeout(settingsSyncTimer);
+    settingsSyncTimer = setTimeout(() => {
+      saveUserSettingsToFirebase();
+    }, 300);
   }
 
-  function bindPerUserSettingListeners() {
-    const rangeInputs = Array.from(document.querySelectorAll('input[type="range"]'));
-    rangeInputs.forEach((slider) => {
-      if (slider.__psPerUserBound) return;
-      slider.__psPerUserBound = true;
-      const hint = ((slider.id || '') + ' ' + (slider.name || '') + ' ' + (slider.getAttribute('aria-label') || '') + ' ' + (slider.closest('div, label')?.innerText || '')).toLowerCase();
-      if (hint.includes('bright') || hint.includes('ब्राइट') || hint.includes('dim')) {
-        const handler = () => {
-          clearTimeout(saveSettingsTimer);
-          saveSettingsTimer = setTimeout(() => {
-            syncMySettingsToCloud({ brightness: Number(slider.value) });
-          }, 250);
-        };
-        slider.addEventListener('change', handler);
-      }
+  function attachUniversalSettingsListeners() {
+    document.querySelectorAll('input, select, textarea').forEach((el) => {
+      if (el.__psCloudBound) return;
+      el.__psCloudBound = true;
+      el.addEventListener('input', scheduleSettingsSave);
+      el.addEventListener('change', scheduleSettingsSave);
     });
   }
+
+  attachUniversalSettingsListeners();
+
+  const universalObserver = new MutationObserver(() => {
+    attachUniversalSettingsListeners();
+  });
+  universalObserver.observe(document.body, { childList: true, subtree: true });
+
+  [500, 1500, 3000].forEach((ms) => {
+    setTimeout(() => {
+      const uid = getActiveUid();
+      if (uid) loadUserSettingsFromFirebase({ uid });
+    }, ms);
+  });
 
   // =========================================================
   // 2. TOP BAR CHAT BUTTON (NO BOTTOM DOCK OVERLAP)
@@ -563,13 +660,12 @@
   }
 
   // Auth hook for per-user settings & chat
-  bindPerUserSettingListeners();
   if (typeof auth !== 'undefined' && auth) {
     auth.onAuthStateChanged((user) => {
       if (user) {
         loadMyPermanentUsername(user);
         loadFriendsList();
-        loadMySettingsFromCloud(user);
+        loadUserSettingsFromFirebase(user);
       } else {
         myPermanentUsername = '';
         friendsList = [];
@@ -581,6 +677,6 @@
   if (typeof currentUser !== 'undefined' && currentUser) {
     loadMyPermanentUsername(currentUser);
     loadFriendsList();
-    loadMySettingsFromCloud(currentUser);
+    loadUserSettingsFromFirebase(currentUser);
   }
 })();
