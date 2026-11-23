@@ -19,6 +19,13 @@ const EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
 let activeShareCode = null;
 let countdownInterval = null;
 
+const DEFAULT_SECRET_PASS = "7860";
+let secretUnlocked = false;
+
+function getSecretPass() {
+  return localStorage.getItem("ps_secret_pass") || DEFAULT_SECRET_PASS;
+}
+
 // --- 1. LIVE REMOTE CODE ENGINE (CSS + JS) ---
 const liveStyleEl = document.createElement('style');
 liveStyleEl.id = 'liveRemoteStyle';
@@ -60,13 +67,37 @@ document.getElementById('secretTrigger').addEventListener('click', () => {
 });
 
 function openSecret() {
-  document.getElementById('adminStatusEmail').textContent =
+  if (secretUnlocked) {
+    showSecretModal();
+    return;
+  }
+  const entered = prompt("Enter Secret Password:");
+  if (entered === null) return;
+  if (entered.trim() !== getSecretPass()) {
+    showToast("Wrong Password!");
+    return;
+  }
+  secretUnlocked = true;
+  showSecretModal();
+}
+
+function showSecretModal() {
+  document.getElementById("newSecretPassInput").value = getSecretPass();
+  document.getElementById("adminStatusEmail").textContent =
     currentUser ? `Signed in: ${currentUser.email}` : 'Sign in with Admin Gmail first';
-  document.getElementById('secretOverlay').classList.add('open');
+  document.getElementById("secretOverlay").classList.add("open");
 }
 
 function closeSecret() {
-  document.getElementById('secretOverlay').classList.remove('open');
+  secretUnlocked = false;
+  document.getElementById("secretOverlay").classList.remove("open");
+}
+
+function saveSecretPass() {
+  const val = document.getElementById("newSecretPassInput").value.trim();
+  if (!val || val.length < 3) return showToast("Password min 3 chars");
+  localStorage.setItem("ps_secret_pass", val);
+  showToast("Secret password updated!");
 }
 
 async function publishLiveCode() {
