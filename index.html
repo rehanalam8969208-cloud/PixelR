@@ -4,782 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Pixel Studio</title>
+  <link rel="stylesheet" href="style.css">
   <!-- Firebase Compat SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-  <style>
-    :root {
-      --bg-base: #06070a;
-      --bg-dim: 0.45;
-      --card-color: #ffffff;
-      --card-alpha: 0.08;
-      --glass-blur: 24px;
-      --border-color: #ffffff;
-      --border-alpha: 0.16;
-      --radius: 26px;
-
-      --text-primary: #ffffff;
-      --text-secondary: #a1a1aa;
-
-      --btn-bg: transparent;
-      --btn-border: rgba(255, 255, 255, 0.22);
-      --btn-text: #ffffff;
-      --btn-active-bg: #ffffff;
-      --btn-active-text: #06070a;
-
-      --dock-bg: rgba(14, 15, 20, 0.72);
-      --dock-pill-bg: #ffffff;
-      --dock-pill-text: #06070a;
-
-      --toast-bg: rgba(12, 14, 18, 0.88);
-      --toast-dot: #ffffff;
-
-      --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-      --fluid: cubic-bezier(0.2, 0.9, 0.2, 1);
-    }
-
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, sans-serif;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background-color: var(--bg-base);
-      color: var(--text-primary);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 16px 16px 115px 16px;
-      overflow-x: hidden;
-      position: relative;
-    }
-
-    /* Dynamic Wallpaper Layer */
-    .wallpaper-layer {
-      position: fixed;
-      inset: 0;
-      z-index: -2;
-      background:
-        radial-gradient(circle at 20% 10%, rgba(255, 255, 255, 0.08) 0%, transparent 45%),
-        radial-gradient(circle at 80% 85%, rgba(255, 255, 255, 0.06) 0%, transparent 45%),
-        var(--bg-base);
-      background-size: cover;
-      background-position: center;
-      transition: background-image 0.4s ease;
-    }
-
-    .wallpaper-dim {
-      position: fixed;
-      inset: 0;
-      z-index: -1;
-      background: rgba(0, 0, 0, var(--bg-dim));
-      pointer-events: none;
-      transition: background 0.2s ease;
-    }
-
-    /* Floating Dynamic Toast */
-    .toast {
-      position: fixed;
-      top: 16px;
-      left: 50%;
-      transform: translate(-50%, -130%) scale(0.9);
-      background: var(--toast-bg);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: var(--text-primary);
-      padding: 10px 18px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
-      z-index: 3000;
-      opacity: 0;
-      transition: transform 0.5s var(--spring), opacity 0.3s ease;
-      pointer-events: none;
-      max-width: 90%;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .toast.show {
-      transform: translate(-50%, 0) scale(1);
-      opacity: 1;
-    }
-
-    .toast-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--toast-dot);
-      flex-shrink: 0;
-    }
-
-    /* Top App Header */
-    .topbar {
-      width: 100%;
-      max-width: 430px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-      padding: 4px 2px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .brand-icon {
-      width: 34px;
-      height: 34px;
-      border-radius: 11px;
-      background: color-mix(in srgb, var(--card-color) 12%, transparent);
-      border: 1px solid color-mix(in srgb, var(--border-color) 22%, transparent);
-      backdrop-filter: blur(12px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .brand-title {
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: -0.3px;
-    }
-
-    .top-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .icon-btn {
-      position: relative;
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: var(--btn-bg);
-      border: 1px solid var(--btn-border);
-      color: var(--btn-text);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      backdrop-filter: blur(12px);
-      transition: transform 0.3s var(--spring), background 0.15s ease, color 0.15s ease;
-    }
-
-    .icon-btn:active {
-      background: var(--btn-active-bg);
-      color: var(--btn-active-text);
-      border-color: var(--btn-active-bg);
-      transform: scale(0.9);
-    }
-
-    .auth-dot {
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #ffffff;
-      box-shadow: 0 0 8px #ffffff;
-      display: none;
-    }
-
-    .auth-dot.online { display: block; }
-
-    /* Glass Cards */
-    .stage-card, .panel-card {
-      width: 100%;
-      max-width: 430px;
-      background: color-mix(in srgb, var(--card-color) calc(var(--card-alpha) * 100%), transparent);
-      backdrop-filter: blur(var(--glass-blur));
-      -webkit-backdrop-filter: blur(var(--glass-blur));
-      border: 1px solid color-mix(in srgb, var(--border-color) calc(var(--border-alpha) * 100%), transparent);
-      border-radius: var(--radius);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
-      transition: border-radius 0.2s ease, background 0.2s ease;
-    }
-
-    .stage-card {
-      padding: 12px;
-      margin-bottom: 14px;
-    }
-
-    .viewport {
-      position: relative;
-      width: 100%;
-      height: 220px;
-      border-radius: calc(var(--radius) - 8px);
-      background: rgba(0, 0, 0, 0.35);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      color: var(--text-secondary);
-      font-size: 13px;
-    }
-
-    .empty-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-secondary);
-    }
-
-    canvas {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      display: none;
-      border-radius: 12px;
-      animation: popIn 0.45s var(--spring);
-    }
-
-    @keyframes popIn {
-      from { opacity: 0; transform: scale(0.92); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    .meta-pill {
-      position: absolute;
-      bottom: 10px;
-      right: 10px;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: var(--text-primary);
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 999px;
-      display: none;
-    }
-
-    .loader-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(10px);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s ease;
-      z-index: 10;
-    }
-
-    .loader-overlay.active {
-      opacity: 1;
-      pointer-events: all;
-    }
-
-    .spinner {
-      width: 28px;
-      height: 28px;
-      border: 2.5px solid rgba(255, 255, 255, 0.18);
-      border-top-color: var(--text-primary);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Control Panels */
-    .panel-card {
-      padding: 18px;
-      display: none;
-      transform-origin: top center;
-    }
-
-    .panel-card.active {
-      display: block;
-      animation: panelEnter 0.45s var(--spring);
-    }
-
-    @keyframes panelEnter {
-      from { opacity: 0; transform: translateY(16px) scale(0.97); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    .section-label {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.9px;
-      color: var(--text-secondary);
-      margin: 0 0 10px 4px;
-    }
-
-    input[type="file"] { display: none; }
-
-    /* Pure Transparent -> White on Tap Buttons */
-    .btn, .upload-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      padding: 14px 16px;
-      border-radius: 18px;
-      background: var(--btn-bg);
-      border: 1px solid var(--btn-border);
-      color: var(--btn-text);
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.28s var(--spring), background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.2s ease;
-      user-select: none;
-    }
-
-    .upload-btn {
-      border-style: dashed;
-      margin-bottom: 12px;
-    }
-
-    .btn:active, .upload-btn:active {
-      background: var(--btn-active-bg);
-      color: var(--btn-active-text);
-      border-color: var(--btn-active-bg);
-      transform: scale(0.95);
-      box-shadow: 0 0 24px rgba(255, 255, 255, 0.3);
-    }
-
-    /* Input Group */
-    .input-wrap {
-      position: relative;
-      display: flex;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .input-icon {
-      position: absolute;
-      left: 14px;
-      color: var(--text-secondary);
-      display: flex;
-      pointer-events: none;
-    }
-
-    .input-wrap input {
-      width: 100%;
-      padding: 14px 44px 14px 42px;
-      border-radius: 18px;
-      border: 1px solid var(--btn-border);
-      background: rgba(0, 0, 0, 0.28);
-      color: var(--text-primary);
-      font-size: 14px;
-      font-weight: 500;
-      outline: none;
-      transition: border-color 0.2s, background 0.2s;
-    }
-
-    .input-wrap input:focus {
-      border-color: var(--btn-active-bg);
-      background: rgba(0, 0, 0, 0.42);
-    }
-
-    .input-wrap input::placeholder {
-      color: var(--text-secondary);
-      opacity: 0.7;
-    }
-
-    .eye-btn {
-      position: absolute;
-      right: 8px;
-      background: transparent;
-      border: none;
-      color: var(--text-secondary);
-      padding: 8px;
-      cursor: pointer;
-      display: flex;
-      border-radius: 12px;
-      transition: background 0.15s, color 0.15s;
-    }
-
-    .eye-btn:active {
-      background: var(--btn-active-bg);
-      color: var(--btn-active-text);
-    }
-
-    .action-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .mb-10 { margin-bottom: 10px; }
-    .mb-14 { margin-bottom: 14px; }
-
-    .divider {
-      height: 1px;
-      background: rgba(255, 255, 255, 0.1);
-      margin: 16px 0;
-    }
-
-    /* Share Code Box */
-    .share-code-box {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      padding: 16px;
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      margin-bottom: 12px;
-      text-align: center;
-    }
-
-    .share-code-box.show { display: flex; }
-
-    .share-code-num {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 32px;
-      font-weight: 800;
-      letter-spacing: 6px;
-      color: var(--text-primary);
-    }
-
-    .share-hint {
-      font-size: 11.5px;
-      color: var(--text-secondary);
-    }
-
-    /* Android 17 Expressive Floating Bottom Dock (3 Tabs) */
-    .bottom-dock {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: calc(100% - 28px);
-      max-width: 390px;
-      background: var(--dock-bg);
-      backdrop-filter: blur(30px);
-      -webkit-backdrop-filter: blur(30px);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      border-radius: 999px;
-      padding: 5px;
-      display: flex;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
-      z-index: 100;
-    }
-
-    .dock-indicator {
-      position: absolute;
-      top: 5px;
-      left: 5px;
-      width: calc(33.333% - 3.33px);
-      height: calc(100% - 10px);
-      background: var(--dock-pill-bg);
-      border-radius: 999px;
-      transition: transform 0.5s var(--spring);
-      pointer-events: none;
-      box-shadow: 0 4px 16px rgba(255, 255, 255, 0.25);
-    }
-
-    .dock-btn {
-      position: relative;
-      z-index: 2;
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 12px 6px;
-      background: transparent;
-      border: none;
-      color: var(--text-secondary);
-      font-size: 12.5px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: color 0.3s ease, transform 0.25s var(--spring);
-    }
-
-    .dock-btn.active { color: var(--dock-pill-text); }
-    .dock-btn:active { transform: scale(0.94); }
-
-    /* --- FULLSCREEN MODALS (SETTINGS & ACCOUNT) --- */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 1000;
-      background: rgba(5, 6, 9, 0.8);
-      backdrop-filter: blur(32px);
-      -webkit-backdrop-filter: blur(32px);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 16px;
-      overflow-y: auto;
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(24px) scale(0.97);
-      transition: opacity 0.3s ease, transform 0.45s var(--spring);
-    }
-
-    .modal-overlay.open {
-      opacity: 1;
-      pointer-events: all;
-      transform: translateY(0) scale(1);
-    }
-
-    .modal-shell {
-      width: 100%;
-      max-width: 430px;
-      padding-bottom: 40px;
-    }
-
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-
-    .modal-title {
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: -0.3px;
-    }
-
-    /* Settings Category Pills */
-    .cat-bar {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 18px;
-      padding: 5px;
-      margin-bottom: 16px;
-    }
-
-    .cat-btn {
-      padding: 9px 4px;
-      border-radius: 13px;
-      border: none;
-      background: transparent;
-      color: var(--text-secondary);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.25s var(--spring);
-    }
-
-    .cat-btn.active {
-      background: var(--btn-active-bg);
-      color: var(--btn-active-text);
-    }
-
-    .cat-page { display: none; animation: panelEnter 0.35s var(--spring); }
-    .cat-page.active { display: block; }
-
-    /* Folder Chips */
-    .folder-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 14px;
-    }
-
-    .folder-chip {
-      padding: 12px;
-      border-radius: 16px;
-      background: var(--btn-bg);
-      border: 1px solid var(--btn-border);
-      color: var(--btn-text);
-      font-size: 13px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-      transition: transform 0.25s var(--spring), background 0.18s, color 0.18s;
-    }
-
-    .folder-chip.selected, .folder-chip:active {
-      background: var(--btn-active-bg);
-      color: var(--btn-active-text);
-      border-color: var(--btn-active-bg);
-      transform: scale(0.96);
-    }
-
-    /* Color Customizer Rows */
-    .color-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
-
-    .color-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 14px;
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .color-row span { font-size: 13px; font-weight: 500; color: var(--text-primary); }
-    .color-picker-wrap { display: flex; align-items: center; gap: 8px; }
-    .hex-tag { font-family: ui-monospace, monospace; font-size: 11px; color: var(--text-secondary); text-transform: uppercase; }
-
-    input[type="color"] {
-      -webkit-appearance: none;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: none;
-      cursor: pointer;
-      padding: 0;
-      overflow: hidden;
-    }
-    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-    input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
-
-    /* Sliders */
-    .slider-group {
-      margin-bottom: 10px;
-      padding: 11px 14px;
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .slider-head {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      margin-bottom: 6px;
-    }
-
-    .slider-head span:last-child { color: var(--text-primary); }
-
-    input[type="range"] {
-      -webkit-appearance: none;
-      width: 100%;
-      height: 4px;
-      border-radius: 99px;
-      background: rgba(255, 255, 255, 0.2);
-      outline: none;
-    }
-
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: var(--btn-active-bg);
-      cursor: pointer;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
-      transition: transform 0.2s var(--spring);
-    }
-
-    input[type="range"]::-webkit-slider-thumb:active { transform: scale(1.25); }
-
-    /* File Selector Pills & Code Editor */
-    .file-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-
-    .file-pill {
-      padding: 7px 12px;
-      border-radius: 12px;
-      background: transparent;
-      border: 1px solid var(--btn-border);
-      color: var(--text-secondary);
-      font-family: ui-monospace, monospace;
-      font-size: 11.5px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s var(--spring);
-    }
-
-    .file-pill.active, .file-pill:active {
-      background: var(--btn-active-bg);
-      color: var(--btn-active-text);
-      border-color: var(--btn-active-bg);
-    }
-
-    textarea.code-box {
-      width: 100%;
-      height: 210px;
-      padding: 14px;
-      border-radius: 18px;
-      background: rgba(0, 0, 0, 0.55);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      color: #f8fafc;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 12px;
-      line-height: 1.5;
-      outline: none;
-      resize: vertical;
-      margin-bottom: 12px;
-    }
-
-    textarea.code-box:focus { border-color: var(--btn-active-bg); }
-
-    .profile-box {
-      padding: 16px;
-      border-radius: 20px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      margin-bottom: 14px;
-      text-align: center;
-    }
-
-    .profile-email {
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 4px;
-      word-break: break-all;
-    }
-
-    .profile-sub {
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
-
-    svg {
-      width: 17px;
-      height: 17px;
-      stroke: currentColor;
-      fill: none;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      flex-shrink: 0;
-    }
-  </style>
 </head>
 <body>
 
@@ -793,9 +22,9 @@
     <span id="toastText">Ready</span>
   </div>
 
-  <!-- Top Bar with Account & Settings Icons -->
+  <!-- Top Bar (Tap "Pixel Studio" 5 times for Secret Admin Updater) -->
   <div class="topbar">
-    <div class="brand">
+    <div class="brand" id="secretTrigger" style="cursor:pointer; user-select:none;">
       <div class="brand-icon">
         <svg viewBox="0 0 24 24">
           <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
@@ -903,12 +132,12 @@
     </button>
   </div>
 
-  <!-- TAB 3: AUTO-DELETE FILE SHARE -->
+  <!-- TAB 3: 5-MIN AUTO-DELETE SHARE -->
   <div id="tab-share" class="panel-card">
     <div id="shareLockedBox" style="display:block; text-align:center; padding: 12px 4px;">
       <div class="section-label" style="text-align:center;">Sign In Required</div>
       <p style="font-size:13px; color:var(--text-secondary); margin:0 0 14px 0;">
-        Login to send & receive auto-deleting files securely.
+        Login to send & receive files with 5-minute auto-delete.
       </p>
       <button class="btn" onclick="openAccount()">
         <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
@@ -917,9 +146,9 @@
     </div>
 
     <div id="shareMainBox" style="display:none;">
-      <div class="section-label">Send File (Auto-Deletes After Download)</div>
+      <div class="section-label">Send File (Auto-Wipes in 5 Mins)</div>
 
-      <label for="shareFileInput" class="upload-btn" id="shareFileLabel">
+      <label for="shareFileInput" class="upload-btn">
         <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         <span id="shareFileName">Choose File (Image / .txt / Max 4MB)</span>
       </label>
@@ -931,16 +160,21 @@
       </button>
 
       <div id="shareCodeBox" class="share-code-box">
-        <span class="share-hint">SHARE THIS ONE-TIME CODE</span>
+        <span class="share-hint">EXPIRES IN <strong id="shareTimerText" style="color:#fff;">05:00</strong></span>
         <span id="shareCodeNum" class="share-code-num">000000</span>
-        <button class="btn" style="padding:9px 14px; font-size:12px;" onclick="copyShareCode()">
-          <span>Copy Code</span>
-        </button>
+        <div class="action-grid" style="width:100%; margin-bottom:0; margin-top:4px;">
+          <button class="btn" style="padding:10px; font-size:12px;" onclick="copyShareCode()">
+            <span>Copy Code</span>
+          </button>
+          <button class="btn" style="padding:10px; font-size:12px;" onclick="deleteActiveShareNow()">
+            <span>Delete Now</span>
+          </button>
+        </div>
       </div>
 
       <div class="divider"></div>
 
-      <div class="section-label">Receive & Auto-Delete</div>
+      <div class="section-label">Receive & Wipe Instantly</div>
       <div class="input-wrap">
         <span class="input-icon">
           <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -950,12 +184,12 @@
 
       <button class="btn" onclick="receiveShareFile()">
         <svg viewBox="0 0 24 24"><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg>
-        <span>Download & Wipe from Cloud</span>
+        <span>Download & Delete Now</span>
       </button>
     </div>
   </div>
 
-  <!-- Floating Bottom Dock (3 Tabs) -->
+  <!-- Floating Bottom Dock -->
   <div class="bottom-dock">
     <div id="dockIndicator" class="dock-indicator"></div>
     <button class="dock-btn active" id="btn-tab-lock" onclick="switchTab('lock', 0)">
@@ -972,6 +206,41 @@
     </button>
   </div>
 
+  <!-- SECRET ADMIN LIVE CODE UPDATER MODAL -->
+  <div id="secretOverlay" class="modal-overlay">
+    <div class="modal-shell">
+      <div class="modal-header">
+        <span class="modal-title">Live Code Engine</span>
+        <button class="icon-btn" onclick="closeSecret()" aria-label="Close">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="section-label">Admin Status</div>
+      <div class="profile-box" style="padding:12px; margin-bottom:14px;">
+        <div class="profile-email" id="adminStatusEmail" style="font-size:13px;">Not Signed In</div>
+        <div class="profile-sub">Changes push live to all users instantly</div>
+      </div>
+
+      <div class="section-label">Live CSS Patch (Design / Buttons)</div>
+      <textarea id="liveCssBox" class="code-box" style="height:130px;" placeholder="/* Example: .btn { border-radius: 99px; } */" spellcheck="false"></textarea>
+
+      <div class="section-label">Live JavaScript Patch (Features / Logic)</div>
+      <textarea id="liveJsBox" class="code-box" style="height:150px;" placeholder="// Example: showToast('App Updated Live!');" spellcheck="false"></textarea>
+
+      <div class="action-grid">
+        <button class="btn" onclick="publishLiveCode()">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Publish Live</span>
+        </button>
+        <button class="btn" onclick="clearLiveCode()">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+          <span>Clear Patch</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ACCOUNT / LOGIN MODAL -->
   <div id="accountOverlay" class="modal-overlay">
     <div class="modal-shell">
@@ -982,7 +251,6 @@
         </button>
       </div>
 
-      <!-- Logged Out View -->
       <div id="authLoggedOut">
         <div class="section-label">Firebase Cloud Account</div>
         <div class="input-wrap">
@@ -998,16 +266,11 @@
           <input type="password" id="authPass" placeholder="Password (min 6 chars)...">
         </div>
         <div class="action-grid">
-          <button class="btn" onclick="doLogin()">
-            <span>Sign In</span>
-          </button>
-          <button class="btn" onclick="doSignup()">
-            <span>Sign Up</span>
-          </button>
+          <button class="btn" onclick="doLogin()"><span>Sign In</span></button>
+          <button class="btn" onclick="doSignup()"><span>Sign Up</span></button>
         </div>
       </div>
 
-      <!-- Logged In View -->
       <div id="authLoggedIn" style="display:none;">
         <div class="profile-box">
           <div class="profile-email" id="userEmailLabel">user@example.com</div>
@@ -1016,12 +279,8 @@
 
         <div class="section-label">Cloud Theme Backup</div>
         <div class="action-grid mb-14">
-          <button class="btn" onclick="syncThemesToCloud()">
-            <span>Save to Cloud</span>
-          </button>
-          <button class="btn" onclick="loadThemesFromCloud()">
-            <span>Load from Cloud</span>
-          </button>
+          <button class="btn" onclick="syncThemesToCloud()"><span>Save to Cloud</span></button>
+          <button class="btn" onclick="loadThemesFromCloud()"><span>Load from Cloud</span></button>
         </div>
 
         <button class="btn" onclick="doLogout()">
@@ -1042,7 +301,6 @@
         </button>
       </div>
 
-      <!-- 4 Settings Categories -->
       <div class="cat-bar">
         <button class="cat-btn active" id="cbtn-folders" onclick="switchCat('folders')">Folders</button>
         <button class="cat-btn" id="cbtn-colors" onclick="switchCat('colors')">Colors</button>
@@ -1050,7 +308,6 @@
         <button class="cat-btn" id="cbtn-files" onclick="switchCat('files')">Files</button>
       </div>
 
-      <!-- CATEGORY 1: THEME FOLDERS -->
       <div id="cat-folders" class="cat-page active">
         <div class="section-label">Theme Folders</div>
         <div id="folderGrid" class="folder-grid"></div>
@@ -1066,7 +323,6 @@
         </div>
       </div>
 
-      <!-- CATEGORY 2: DEDICATED COLORS INTERFACE -->
       <div id="cat-colors" class="cat-page">
         <div class="section-label">App & Text Colors</div>
         <div class="color-list" id="colorListApp"></div>
@@ -1083,7 +339,6 @@
         </button>
       </div>
 
-      <!-- CATEGORY 3: GLASS & WALLPAPER -->
       <div id="cat-glass" class="cat-page">
         <div class="section-label">Background Photo</div>
         <div class="action-grid mb-14">
@@ -1121,7 +376,6 @@
         </div>
       </div>
 
-      <!-- CATEGORY 4: INDIVIDUAL CONFIG FILES (CODE EDITOR) -->
       <div id="cat-files" class="cat-page">
         <div class="section-label">Select Config File to Edit</div>
         <div class="file-tabs">
@@ -1145,685 +399,13 @@
           </button>
         </div>
       </div>
-
     </div>
   </div>
 
-  <script>
-    // --- FIREBASE INITIALIZATION ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyCe9PY5mGrSOlzLOKByFrii_7_Vjlvv0AM",
-      authDomain: "pixel-8e2df.firebaseapp.com",
-      databaseURL: "https://pixel-8e2df-default-rtdb.firebaseio.com",
-      projectId: "pixel-8e2df",
-      storageBucket: "pixel-8e2df.firebasestorage.app",
-      messagingSenderId: "905163536146",
-      appId: "1:905163536146:web:d21f3ea2c65729a4f5a5cb",
-      measurementId: "G-DT9E32T5ZR"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.database();
-    let currentUser = null;
-
-    auth.onAuthStateChanged((user) => {
-      currentUser = user;
-      const dot = document.getElementById('authDot');
-      const loggedOut = document.getElementById('authLoggedOut');
-      const loggedIn = document.getElementById('authLoggedIn');
-      const shareLocked = document.getElementById('shareLockedBox');
-      const shareMain = document.getElementById('shareMainBox');
-
-      if (user) {
-        dot.classList.add('online');
-        loggedOut.style.display = 'none';
-        loggedIn.style.display = 'block';
-        document.getElementById('userEmailLabel').textContent = user.email;
-        shareLocked.style.display = 'none';
-        shareMain.style.display = 'block';
-      } else {
-        dot.classList.remove('online');
-        loggedOut.style.display = 'block';
-        loggedIn.style.display = 'none';
-        shareLocked.style.display = 'block';
-        shareMain.style.display = 'none';
-      }
-    });
-
-    function openAccount() { document.getElementById('accountOverlay').classList.add('open'); }
-    function closeAccount() { document.getElementById('accountOverlay').classList.remove('open'); }
-
-    async function doLogin() {
-      const email = document.getElementById('authEmail').value.trim();
-      const pass = document.getElementById('authPass').value;
-      if (!email || !pass) return showToast('Enter email & password');
-      try {
-        await auth.signInWithEmailAndPassword(email, pass);
-        showToast('Signed in');
-        closeAccount();
-      } catch (e) {
-        showToast(e.message.split('.')[0]);
-      }
-    }
-
-    async function doSignup() {
-      const email = document.getElementById('authEmail').value.trim();
-      const pass = document.getElementById('authPass').value;
-      if (!email || pass.length < 6) return showToast('Password min 6 chars');
-      try {
-        await auth.createUserWithEmailAndPassword(email, pass);
-        showToast('Account created');
-        closeAccount();
-      } catch (e) {
-        showToast(e.message.split('.')[0]);
-      }
-    }
-
-    async function doLogout() {
-      await auth.signOut();
-      showToast('Signed out');
-      closeAccount();
-    }
-
-    async function syncThemesToCloud() {
-      if (!currentUser) return showToast('Sign in first');
-      try {
-        await db.ref('users/' + currentUser.uid + '/themes').set({
-          folders: themeFolders,
-          active: activeFolderName,
-          updatedAt: Date.now()
-        });
-        showToast('Themes saved to cloud');
-      } catch (e) {
-        showToast('Cloud save failed');
-      }
-    }
-
-    async function loadThemesFromCloud() {
-      if (!currentUser) return showToast('Sign in first');
-      try {
-        const snap = await db.ref('users/' + currentUser.uid + '/themes').get();
-        if (!snap.exists()) return showToast('No cloud backup found');
-        const val = snap.val();
-        if (val.folders) {
-          themeFolders = val.folders;
-          activeFolderName = val.active || Object.keys(themeFolders)[0];
-          currentTheme = clone(themeFolders[activeFolderName] || BASE_THEME);
-          localStorage.setItem('ps_v2_folders', JSON.stringify(themeFolders));
-          localStorage.setItem('ps_v2_active', activeFolderName);
-          applyTheme(currentTheme);
-          renderFolders();
-          buildColorUI();
-          showToast('Themes restored from cloud');
-        }
-      } catch (e) {
-        showToast('Cloud load failed');
-      }
-    }
-
-    // --- AUTO-DELETE FILE SHARING ---
-    let selectedShareFile = null;
-
-    document.getElementById('shareFileInput').addEventListener('change', (e) => {
-      const f = e.target.files[0];
-      if (!f) return;
-      if (f.size > 4.5 * 1024 * 1024) {
-        showToast('File too large (Max 4.5 MB)');
-        selectedShareFile = null;
-        return;
-      }
-      selectedShareFile = f;
-      const sizeKB = (f.size / 1024).toFixed(0);
-      document.getElementById('shareFileName').textContent = `${f.name} (${sizeKB} KB)`;
-    });
-
-    function uploadShareFile() {
-      if (!currentUser) return showToast('Sign in first');
-      if (!selectedShareFile) return showToast('Select a file first');
-
-      const btn = document.getElementById('btnSendShare');
-      btn.style.opacity = '0.5';
-      showToast('Uploading to cloud...');
-
-      const reader = new FileReader();
-      reader.onload = async (ev) => {
-        try {
-          const code = Math.floor(100000 + Math.random() * 900000).toString();
-          await db.ref('shares/' + code).set({
-            name: selectedShareFile.name,
-            type: selectedShareFile.type || 'application/octet-stream',
-            data: ev.target.result,
-            createdAt: Date.now()
-          });
-          document.getElementById('shareCodeNum').textContent = code;
-          document.getElementById('shareCodeBox').classList.add('show');
-          showToast(`Code ready: ${code}`);
-        } catch (err) {
-          showToast('Upload failed (check size/rules)');
-        } finally {
-          btn.style.opacity = '1';
-        }
-      };
-      reader.readAsDataURL(selectedShareFile);
-    }
-
-    function copyShareCode() {
-      const code = document.getElementById('shareCodeNum').textContent;
-      navigator.clipboard.writeText(code).then(() => showToast('Code copied'));
-    }
-
-    async function receiveShareFile() {
-      if (!currentUser) return showToast('Sign in first');
-      const code = document.getElementById('receiveCodeInput').value.trim();
-      if (code.length !== 6) return showToast('Enter 6-digit code');
-
-      showToast('Fetching file...');
-      try {
-        const ref = db.ref('shares/' + code);
-        const snap = await ref.get();
-        if (!snap.exists()) return showToast('Invalid or already deleted code');
-
-        const fileObj = snap.val();
-
-        // Trigger download
-        const link = document.createElement('a');
-        link.href = fileObj.data;
-        link.download = fileObj.name || ('shared_' + code);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        // PERMANENTLY DELETE FROM FIREBASE IMMEDIATELY
-        await ref.remove();
-        document.getElementById('receiveCodeInput').value = '';
-        showToast('Downloaded & deleted from Firebase');
-      } catch (err) {
-        showToast('Download failed');
-      }
-    }
-
-    // --- CORE APP & CANVAS ---
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    const emptyState = document.getElementById('emptyState');
-    const metaPill = document.getElementById('metaPill');
-    const loader = document.getElementById('loader');
-    const toast = document.getElementById('toast');
-    const toastText = document.getElementById('toastText');
-    const wallpaperLayer = document.getElementById('wallpaperLayer');
-    const stageCard = document.getElementById('stageCard');
-    let toastTimer = null;
-    let imgLoaded = false;
-
-    const LUT = Array.from({ length: 256 }, (_, i) => i.toString().padStart(3, '0'));
-
-    // --- MODULAR THEME FILE ENGINE ---
-    const BASE_THEME = {
-      colors: {
-        bgBase: "#06070a",
-        cardColor: "#ffffff",
-        borderColor: "#ffffff",
-        textPrimary: "#ffffff",
-        textSecondary: "#a1a1aa"
-      },
-      buttons: {
-        btnBg: "transparent",
-        btnBorder: "#ffffff38",
-        btnText: "#ffffff",
-        btnActiveBg: "#ffffff",
-        btnActiveText: "#06070a"
-      },
-      glass: {
-        cardAlpha: 0.08,
-        glassBlur: 24,
-        borderAlpha: 0.16,
-        bgDim: 0.45,
-        radius: 26
-      },
-      dock: {
-        dockBg: "#0e0f14b8",
-        dockPillBg: "#ffffff",
-        dockPillText: "#06070a",
-        toastBg: "#0c0e12e0",
-        toastDot: "#ffffff"
-      }
-    };
-
-    const clone = (o) => JSON.parse(JSON.stringify(o));
-
-    const DEFAULT_FOLDERS = {
-      "Pure Glass": clone(BASE_THEME),
-      "Crystal Clear": (() => {
-        const t = clone(BASE_THEME);
-        t.glass = { cardAlpha: 0.03, glassBlur: 12, borderAlpha: 0.24, bgDim: 0.25, radius: 28 };
-        return t;
-      })(),
-      "Obsidian Matte": (() => {
-        const t = clone(BASE_THEME);
-        t.colors.bgBase = "#000000";
-        t.glass = { cardAlpha: 0.16, glassBlur: 36, borderAlpha: 0.12, bgDim: 0.72, radius: 20 };
-        return t;
-      })(),
-      "Frosted Ice": (() => {
-        const t = clone(BASE_THEME);
-        t.colors.bgBase = "#0c0f14";
-        t.glass = { cardAlpha: 0.22, glassBlur: 32, borderAlpha: 0.28, bgDim: 0.35, radius: 30 };
-        return t;
-      })()
-    };
-
-    let themeFolders = JSON.parse(localStorage.getItem('ps_v2_folders') || 'null') || clone(DEFAULT_FOLDERS);
-    let activeFolderName = localStorage.getItem('ps_v2_active') || "Pure Glass";
-    let currentTheme = clone(themeFolders[activeFolderName] || BASE_THEME);
-    let activeConfigFile = 'colors';
-
-    const COLOR_FIELDS = {
-      app: [
-        { sec: 'colors', key: 'bgBase', label: 'Base Background' },
-        { sec: 'colors', key: 'cardColor', label: 'Glass Card Tint' },
-        { sec: 'colors', key: 'borderColor', label: 'Card Border' },
-        { sec: 'colors', key: 'textPrimary', label: 'Primary Text' },
-        { sec: 'colors', key: 'textSecondary', label: 'Secondary Text' }
-      ],
-      btn: [
-        { sec: 'buttons', key: 'btnText', label: 'Button Text' },
-        { sec: 'buttons', key: 'btnBorder', label: 'Button Border' },
-        { sec: 'buttons', key: 'btnActiveBg', label: 'Click / Active Fill' },
-        { sec: 'buttons', key: 'btnActiveText', label: 'Click / Active Text' }
-      ],
-      dock: [
-        { sec: 'dock', key: 'dockPillBg', label: 'Dock Active Pill' },
-        { sec: 'dock', key: 'dockPillText', label: 'Dock Active Text' },
-        { sec: 'dock', key: 'toastDot', label: 'Toast Indicator Dot' }
-      ]
-    };
-
-    function toHex6(val) {
-      if (!val || val === 'transparent') return '#000000';
-      return val.slice(0, 7);
-    }
-
-    function buildColorUI() {
-      const renderList = (elId, items) => {
-        const el = document.getElementById(elId);
-        el.innerHTML = '';
-        items.forEach(item => {
-          const val = currentTheme[item.sec][item.key];
-          const row = document.createElement('div');
-          row.className = 'color-row';
-          row.innerHTML = `
-            <span>${item.label}</span>
-            <div class="color-picker-wrap">
-              <span class="hex-tag" id="hex-${item.key}">${val}</span>
-              <input type="color" value="${toHex6(val)}" oninput="updateColor('${item.sec}','${item.key}', this.value)">
-            </div>`;
-          el.appendChild(row);
-        });
-      };
-      renderList('colorListApp', COLOR_FIELDS.app);
-      renderList('colorListBtn', COLOR_FIELDS.btn);
-      renderList('colorListDock', COLOR_FIELDS.dock);
-    }
-
-    function updateColor(sec, key, val) {
-      currentTheme[sec][key] = val;
-      const tag = document.getElementById('hex-' + key);
-      if (tag) tag.textContent = val;
-      applyTheme(currentTheme);
-    }
-
-    function renderFolders() {
-      const grid = document.getElementById('folderGrid');
-      grid.innerHTML = '';
-      Object.keys(themeFolders).forEach(name => {
-        const btn = document.createElement('button');
-        btn.className = 'folder-chip' + (name === activeFolderName ? ' selected' : '');
-        btn.innerHTML = `<span>${name}</span><svg viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`;
-        btn.onclick = () => {
-          activeFolderName = name;
-          currentTheme = clone(themeFolders[name]);
-          localStorage.setItem('ps_v2_active', name);
-          applyTheme(currentTheme);
-          renderFolders();
-          buildColorUI();
-          showToast(`Folder: ${name}`);
-        };
-        grid.appendChild(btn);
-      });
-    }
-
-    function applyTheme(t) {
-      const r = document.documentElement.style;
-      r.setProperty('--bg-base', t.colors.bgBase);
-      r.setProperty('--card-color', t.colors.cardColor);
-      r.setProperty('--border-color', t.colors.borderColor);
-      r.setProperty('--text-primary', t.colors.textPrimary);
-      r.setProperty('--text-secondary', t.colors.textSecondary);
-
-      r.setProperty('--btn-bg', t.buttons.btnBg);
-      r.setProperty('--btn-border', t.buttons.btnBorder);
-      r.setProperty('--btn-text', t.buttons.btnText);
-      r.setProperty('--btn-active-bg', t.buttons.btnActiveBg);
-      r.setProperty('--btn-active-text', t.buttons.btnActiveText);
-
-      r.setProperty('--card-alpha', t.glass.cardAlpha);
-      r.setProperty('--glass-blur', t.glass.glassBlur + 'px');
-      r.setProperty('--border-alpha', t.glass.borderAlpha);
-      r.setProperty('--bg-dim', t.glass.bgDim);
-      r.setProperty('--radius', t.glass.radius + 'px');
-
-      r.setProperty('--dock-bg', t.dock.dockBg);
-      r.setProperty('--dock-pill-bg', t.dock.dockPillBg);
-      r.setProperty('--dock-pill-text', t.dock.dockPillText);
-      r.setProperty('--toast-bg', t.dock.toastBg);
-      r.setProperty('--toast-dot', t.dock.toastDot);
-
-      document.getElementById('slAlpha').value = Math.round(t.glass.cardAlpha * 100);
-      document.getElementById('valAlpha').textContent = Math.round(t.glass.cardAlpha * 100) + '%';
-      document.getElementById('slBlur').value = t.glass.glassBlur;
-      document.getElementById('valBlur').textContent = t.glass.glassBlur + 'px';
-      document.getElementById('slBorder').value = Math.round(t.glass.borderAlpha * 100);
-      document.getElementById('valBorder').textContent = Math.round(t.glass.borderAlpha * 100) + '%';
-      document.getElementById('slDim').value = Math.round(t.glass.bgDim * 100);
-      document.getElementById('valDim').textContent = Math.round(t.glass.bgDim * 100) + '%';
-      document.getElementById('slRadius').value = t.glass.radius;
-      document.getElementById('valRadius').textContent = t.glass.radius + 'px';
-
-      syncCodeEditor();
-    }
-
-    function onSliderChange() {
-      currentTheme.glass.cardAlpha = Number(document.getElementById('slAlpha').value) / 100;
-      currentTheme.glass.glassBlur = Number(document.getElementById('slBlur').value);
-      currentTheme.glass.borderAlpha = Number(document.getElementById('slBorder').value) / 100;
-      currentTheme.glass.bgDim = Number(document.getElementById('slDim').value) / 100;
-      currentTheme.glass.radius = Number(document.getElementById('slRadius').value);
-      applyTheme(currentTheme);
-    }
-
-    function openConfigFile(fileKey) {
-      activeConfigFile = fileKey;
-      document.querySelectorAll('.file-pill').forEach(p => p.classList.remove('active'));
-      document.getElementById('fp-' + fileKey).classList.add('active');
-      syncCodeEditor();
-    }
-
-    function syncCodeEditor() {
-      const box = document.getElementById('codeEditor');
-      const data = activeConfigFile === 'all' ? currentTheme : currentTheme[activeConfigFile];
-      box.value = JSON.stringify(data, null, 2);
-    }
-
-    function applyFileCode() {
-      try {
-        const parsed = JSON.parse(document.getElementById('codeEditor').value);
-        if (activeConfigFile === 'all') {
-          currentTheme = { ...currentTheme, ...parsed };
-        } else {
-          currentTheme[activeConfigFile] = { ...currentTheme[activeConfigFile], ...parsed };
-        }
-        applyTheme(currentTheme);
-        buildColorUI();
-        showToast(`${activeConfigFile}.json applied`);
-      } catch {
-        showToast('Invalid JSON syntax');
-      }
-    }
-
-    function saveCurrentFolder() {
-      themeFolders[activeFolderName] = clone(currentTheme);
-      localStorage.setItem('ps_v2_folders', JSON.stringify(themeFolders));
-      renderFolders();
-      showToast(`Saved to "${activeFolderName}"`);
-    }
-
-    function resetDefaults() {
-      themeFolders = clone(DEFAULT_FOLDERS);
-      activeFolderName = "Pure Glass";
-      currentTheme = clone(BASE_THEME);
-      localStorage.removeItem('ps_v2_folders');
-      localStorage.removeItem('ps_v2_active');
-      applyTheme(currentTheme);
-      renderFolders();
-      buildColorUI();
-      showToast('Reset to defaults');
-    }
-
-    document.getElementById('bgPhotoInput').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const img = new Image();
-      img.onload = () => {
-        const maxDim = 1080;
-        let w = img.width, h = img.height;
-        if (w > maxDim || h > maxDim) {
-          const ratio = Math.min(maxDim / w, maxDim / h);
-          w = Math.round(w * ratio);
-          h = Math.round(h * ratio);
-        }
-        const c = document.createElement('canvas');
-        c.width = w; c.height = h;
-        c.getContext('2d').drawImage(img, 0, 0, w, h);
-        const dataUrl = c.toDataURL('image/jpeg', 0.78);
-        try { localStorage.setItem('ps_wallpaper', dataUrl); } catch {}
-        wallpaperLayer.style.backgroundImage = `url(${dataUrl})`;
-        showToast('Wallpaper updated');
-      };
-      img.src = URL.createObjectURL(file);
-    });
-
-    function clearWallpaper() {
-      localStorage.removeItem('ps_wallpaper');
-      wallpaperLayer.style.backgroundImage = '';
-      showToast('Wallpaper cleared');
-    }
-
-    function openSettings() {
-      buildColorUI();
-      syncCodeEditor();
-      document.getElementById('settingsOverlay').classList.add('open');
-    }
-
-    function closeSettings() {
-      document.getElementById('settingsOverlay').classList.remove('open');
-    }
-
-    function switchCat(cat) {
-      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.cat-page').forEach(p => p.classList.remove('active'));
-      document.getElementById('cbtn-' + cat).classList.add('active');
-      document.getElementById('cat-' + cat).classList.add('active');
-      if (cat === 'files') syncCodeEditor();
-    }
-
-    const savedBg = localStorage.getItem('ps_wallpaper');
-    if (savedBg) wallpaperLayer.style.backgroundImage = `url(${savedBg})`;
-    renderFolders();
-    buildColorUI();
-    applyTheme(currentTheme);
-
-    function showToast(msg) {
-      toastText.textContent = msg;
-      toast.classList.add('show');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
-    }
-
-    function setLoading(state) {
-      loader.classList.toggle('active', state);
-    }
-
-    function switchTab(tab, idx) {
-      document.querySelectorAll('.panel-card').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.dock-btn').forEach(el => el.classList.remove('active'));
-      document.getElementById('tab-' + tab).classList.add('active');
-      document.getElementById('btn-tab-' + tab).classList.add('active');
-      document.getElementById('dockIndicator').style.transform = `translateX(${idx * 100}%)`;
-      stageCard.style.display = tab === 'share' ? 'none' : 'block';
-    }
-
-    function toggleKey() {
-      const inp = document.getElementById('keyInput');
-      inp.type = inp.type === 'password' ? 'text' : 'password';
-    }
-
-    function showCanvas(w, h) {
-      emptyState.style.display = 'none';
-      canvas.style.display = 'block';
-      metaPill.style.display = 'block';
-      metaPill.textContent = `${w} × ${h} px`;
-      imgLoaded = true;
-    }
-
-    function loadImageFile(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const img = new Image();
-      img.onload = () => {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-        showCanvas(img.width, img.height);
-        showToast('Image loaded');
-      };
-      img.src = URL.createObjectURL(file);
-    }
-
-    document.getElementById('fileInput').addEventListener('change', loadImageFile);
-    document.getElementById('fileInputNum').addEventListener('change', loadImageFile);
-
-    function hashKey(str) {
-      let h = 2166136261 >>> 0;
-      for (let i = 0; i < str.length; i++) {
-        h ^= str.charCodeAt(i);
-        h = Math.imul(h, 16777619);
-      }
-      return h >>> 0;
-    }
-
-    function mulberry32(a) {
-      return function() {
-        a |= 0; a = a + 0x6D2B79F5 | 0;
-        let t = Math.imul(a ^ a >>> 15, 1 | a);
-        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-        return ((t ^ t >>> 14) >>> 0) / 4294967296;
-      };
-    }
-
-    function process(mode) {
-      if (!imgLoaded) return showToast('Import an image first');
-      const key = document.getElementById('keyInput').value.trim();
-      if (!key) return showToast('Enter a secret key first');
-
-      setLoading(true);
-      setTimeout(() => {
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imgData.data;
-        const n = canvas.width * canvas.height;
-        const indices = new Uint32Array(n);
-        for (let i = 0; i < n; i++) indices[i] = i;
-
-        const rand = mulberry32(hashKey(key));
-        for (let i = n - 1; i > 0; i--) {
-          const j = Math.floor(rand() * (i + 1));
-          const tmp = indices[i];
-          indices[i] = indices[j];
-          indices[j] = tmp;
-        }
-
-        const out = new Uint8ClampedArray(data.length);
-        if (mode === 'scramble') {
-          for (let i = 0; i < n; i++) {
-            const src = indices[i] * 4, dst = i * 4;
-            out[dst] = data[src]; out[dst+1] = data[src+1];
-            out[dst+2] = data[src+2]; out[dst+3] = 255;
-          }
-          showToast('Pixels encrypted');
-        } else {
-          for (let i = 0; i < n; i++) {
-            const src = i * 4, dst = indices[i] * 4;
-            out[dst] = data[src]; out[dst+1] = data[src+1];
-            out[dst+2] = data[src+2]; out[dst+3] = 255;
-          }
-          showToast('Pixels restored');
-        }
-
-        imgData.data.set(out);
-        ctx.putImageData(imgData, 0, 0);
-        setLoading(false);
-      }, 60);
-    }
-
-    function photoToNumbers() {
-      if (!imgLoaded) return showToast('Select an image first');
-      setLoading(true);
-
-      canvas.toBlob(async (blob) => {
-        const buf = await blob.arrayBuffer();
-        const bytes = new Uint8Array(buf);
-        const out = new Array(bytes.length);
-        for (let i = 0; i < bytes.length; i++) out[i] = LUT[bytes[i]];
-
-        const txtBlob = new Blob([out.join('')], { type: 'text/plain' });
-        const sizeMB = (txtBlob.size / (1024 * 1024)).toFixed(2);
-        const link = document.createElement('a');
-        link.download = `pixel_codec_${Date.now()}.txt`;
-        link.href = URL.createObjectURL(txtBlob);
-        link.click();
-        setLoading(false);
-        showToast(`Encoded (${sizeMB} MB)`);
-      }, 'image/webp', 0.8);
-    }
-
-    document.getElementById('txtInput').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      setLoading(true);
-
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        try {
-          const text = ev.target.result.trim();
-          if (text.length % 3 !== 0) throw new Error();
-
-          const len = text.length / 3;
-          const bytes = new Uint8Array(len);
-          for (let i = 0; i < len; i++) {
-            bytes[i] = parseInt(text.substr(i * 3, 3), 10);
-          }
-
-          const imgBlob = new Blob([bytes], { type: 'image/webp' });
-          const img = new Image();
-          img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-            showCanvas(img.width, img.height);
-            setLoading(false);
-            showToast('Image decoded');
-          };
-          img.onerror = () => {
-            setLoading(false);
-            showToast('Invalid number file');
-          };
-          img.src = URL.createObjectURL(imgBlob);
-        } catch {
-          setLoading(false);
-          showToast('Invalid number file');
-        }
-      };
-      reader.readAsText(file);
-    });
-
-    function saveImage() {
-      if (!imgLoaded) return showToast('No image to export');
-      const link = document.createElement('a');
-      link.download = `pixel_studio_${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-      showToast('PNG exported');
-    }
-  </script>
+  <!-- Modular JS Files -->
+  <script src="theme.js"></script>
+  <script src="lock.js"></script>
+  <script src="codec.js"></script>
+  <script src="share.js"></script>
 </body>
 </html>
