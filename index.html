@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Pixel Studio</title>
+  <!-- Firebase Compat SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <style>
     :root {
       --bg-base: #06070a;
@@ -96,7 +100,7 @@
       align-items: center;
       gap: 8px;
       box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
-      z-index: 2000;
+      z-index: 3000;
       opacity: 0;
       transition: transform 0.5s var(--spring), opacity 0.3s ease;
       pointer-events: none;
@@ -154,7 +158,14 @@
       letter-spacing: -0.3px;
     }
 
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .icon-btn {
+      position: relative;
       width: 38px;
       height: 38px;
       border-radius: 50%;
@@ -173,8 +184,22 @@
       background: var(--btn-active-bg);
       color: var(--btn-active-text);
       border-color: var(--btn-active-bg);
-      transform: scale(0.9) rotate(35deg);
+      transform: scale(0.9);
     }
+
+    .auth-dot {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 0 8px #ffffff;
+      display: none;
+    }
+
+    .auth-dot.online { display: block; }
 
     /* Glass Cards */
     .stage-card, .panel-card {
@@ -416,14 +441,49 @@
     .mb-10 { margin-bottom: 10px; }
     .mb-14 { margin-bottom: 14px; }
 
-    /* Android 17 Expressive Floating Bottom Dock (2 Tabs Only) */
+    .divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.1);
+      margin: 16px 0;
+    }
+
+    /* Share Code Box */
+    .share-code-box {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .share-code-box.show { display: flex; }
+
+    .share-code-num {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: 6px;
+      color: var(--text-primary);
+    }
+
+    .share-hint {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+    }
+
+    /* Android 17 Expressive Floating Bottom Dock (3 Tabs) */
     .bottom-dock {
       position: fixed;
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      width: calc(100% - 32px);
-      max-width: 340px;
+      width: calc(100% - 28px);
+      max-width: 390px;
       background: var(--dock-bg);
       backdrop-filter: blur(30px);
       -webkit-backdrop-filter: blur(30px);
@@ -439,7 +499,7 @@
       position: absolute;
       top: 5px;
       left: 5px;
-      width: calc(50% - 5px);
+      width: calc(33.333% - 3.33px);
       height: calc(100% - 10px);
       background: var(--dock-pill-bg);
       border-radius: 999px;
@@ -455,31 +515,26 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 7px;
-      padding: 12px 10px;
+      gap: 6px;
+      padding: 12px 6px;
       background: transparent;
       border: none;
       color: var(--text-secondary);
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 600;
       cursor: pointer;
       transition: color 0.3s ease, transform 0.25s var(--spring);
     }
 
-    .dock-btn.active {
-      color: var(--dock-pill-text);
-    }
+    .dock-btn.active { color: var(--dock-pill-text); }
+    .dock-btn:active { transform: scale(0.94); }
 
-    .dock-btn:active {
-      transform: scale(0.94);
-    }
-
-    /* --- FULLSCREEN SETTINGS MODAL --- */
-    .settings-overlay {
+    /* --- FULLSCREEN MODALS (SETTINGS & ACCOUNT) --- */
+    .modal-overlay {
       position: fixed;
       inset: 0;
       z-index: 1000;
-      background: rgba(5, 6, 9, 0.78);
+      background: rgba(5, 6, 9, 0.8);
       backdrop-filter: blur(32px);
       -webkit-backdrop-filter: blur(32px);
       display: flex;
@@ -493,26 +548,26 @@
       transition: opacity 0.3s ease, transform 0.45s var(--spring);
     }
 
-    .settings-overlay.open {
+    .modal-overlay.open {
       opacity: 1;
       pointer-events: all;
       transform: translateY(0) scale(1);
     }
 
-    .settings-shell {
+    .modal-shell {
       width: 100%;
       max-width: 430px;
       padding-bottom: 40px;
     }
 
-    .settings-header {
+    .modal-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 16px;
     }
 
-    .settings-title {
+    .modal-title {
       font-size: 20px;
       font-weight: 700;
       letter-spacing: -0.3px;
@@ -547,14 +602,8 @@
       color: var(--btn-active-text);
     }
 
-    .cat-page {
-      display: none;
-      animation: panelEnter 0.35s var(--spring);
-    }
-
-    .cat-page.active {
-      display: block;
-    }
+    .cat-page { display: none; animation: panelEnter 0.35s var(--spring); }
+    .cat-page.active { display: block; }
 
     /* Folder Chips */
     .folder-grid {
@@ -587,12 +636,7 @@
     }
 
     /* Color Customizer Rows */
-    .color-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 14px;
-    }
+    .color-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
 
     .color-row {
       display: flex;
@@ -604,24 +648,9 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    .color-row span {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-primary);
-    }
-
-    .color-picker-wrap {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .hex-tag {
-      font-family: ui-monospace, monospace;
-      font-size: 11px;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-    }
+    .color-row span { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+    .color-picker-wrap { display: flex; align-items: center; gap: 8px; }
+    .hex-tag { font-family: ui-monospace, monospace; font-size: 11px; color: var(--text-secondary); text-transform: uppercase; }
 
     input[type="color"] {
       -webkit-appearance: none;
@@ -634,7 +663,6 @@
       padding: 0;
       overflow: hidden;
     }
-
     input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
     input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
 
@@ -681,12 +709,7 @@
     input[type="range"]::-webkit-slider-thumb:active { transform: scale(1.25); }
 
     /* File Selector Pills & Code Editor */
-    .file-tabs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 10px;
-    }
+    .file-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
 
     .file-pill {
       padding: 7px 12px;
@@ -725,6 +748,27 @@
 
     textarea.code-box:focus { border-color: var(--btn-active-bg); }
 
+    .profile-box {
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      margin-bottom: 14px;
+      text-align: center;
+    }
+
+    .profile-email {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      word-break: break-all;
+    }
+
+    .profile-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
     svg {
       width: 17px;
       height: 17px;
@@ -749,7 +793,7 @@
     <span id="toastText">Ready</span>
   </div>
 
-  <!-- Top Bar with Right-Side Settings Icon -->
+  <!-- Top Bar with Account & Settings Icons -->
   <div class="topbar">
     <div class="brand">
       <div class="brand-icon">
@@ -762,13 +806,19 @@
       </div>
       <span class="brand-title">Pixel Studio</span>
     </div>
-    <button class="icon-btn" onclick="openSettings()" aria-label="Settings">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    </button>
+    <div class="top-actions">
+      <button class="icon-btn" onclick="openAccount()" aria-label="Account">
+        <span id="authDot" class="auth-dot"></span>
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </button>
+      <button class="icon-btn" onclick="openSettings()" aria-label="Settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
   </div>
 
   <!-- Preview Stage -->
-  <div class="stage-card">
+  <div class="stage-card" id="stageCard">
     <div class="viewport">
       <div id="emptyState" class="empty-state">
         <div class="empty-icon">
@@ -853,24 +903,140 @@
     </button>
   </div>
 
-  <!-- Floating Bottom Dock (2 Tabs Only) -->
+  <!-- TAB 3: AUTO-DELETE FILE SHARE -->
+  <div id="tab-share" class="panel-card">
+    <div id="shareLockedBox" style="display:block; text-align:center; padding: 12px 4px;">
+      <div class="section-label" style="text-align:center;">Sign In Required</div>
+      <p style="font-size:13px; color:var(--text-secondary); margin:0 0 14px 0;">
+        Login to send & receive auto-deleting files securely.
+      </p>
+      <button class="btn" onclick="openAccount()">
+        <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        <span>Sign In / Create Account</span>
+      </button>
+    </div>
+
+    <div id="shareMainBox" style="display:none;">
+      <div class="section-label">Send File (Auto-Deletes After Download)</div>
+
+      <label for="shareFileInput" class="upload-btn" id="shareFileLabel">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span id="shareFileName">Choose File (Image / .txt / Max 4MB)</span>
+      </label>
+      <input type="file" id="shareFileInput">
+
+      <button class="btn mb-10" id="btnSendShare" onclick="uploadShareFile()">
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        <span>Generate 6-Digit Share Code</span>
+      </button>
+
+      <div id="shareCodeBox" class="share-code-box">
+        <span class="share-hint">SHARE THIS ONE-TIME CODE</span>
+        <span id="shareCodeNum" class="share-code-num">000000</span>
+        <button class="btn" style="padding:9px 14px; font-size:12px;" onclick="copyShareCode()">
+          <span>Copy Code</span>
+        </button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="section-label">Receive & Auto-Delete</div>
+      <div class="input-wrap">
+        <span class="input-icon">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </span>
+        <input type="text" id="receiveCodeInput" maxlength="6" inputmode="numeric" placeholder="Enter 6-digit code...">
+      </div>
+
+      <button class="btn" onclick="receiveShareFile()">
+        <svg viewBox="0 0 24 24"><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg>
+        <span>Download & Wipe from Cloud</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Floating Bottom Dock (3 Tabs) -->
   <div class="bottom-dock">
     <div id="dockIndicator" class="dock-indicator"></div>
     <button class="dock-btn active" id="btn-tab-lock" onclick="switchTab('lock', 0)">
       <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      <span>Pixel Lock</span>
+      <span>Lock</span>
     </button>
     <button class="dock-btn" id="btn-tab-number" onclick="switchTab('number', 1)">
       <svg viewBox="0 0 24 24"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
-      <span>Number Mode</span>
+      <span>Codec</span>
+    </button>
+    <button class="dock-btn" id="btn-tab-share" onclick="switchTab('share', 2)">
+      <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      <span>Share</span>
     </button>
   </div>
 
+  <!-- ACCOUNT / LOGIN MODAL -->
+  <div id="accountOverlay" class="modal-overlay">
+    <div class="modal-shell">
+      <div class="modal-header">
+        <span class="modal-title">Account</span>
+        <button class="icon-btn" onclick="closeAccount()" aria-label="Close">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Logged Out View -->
+      <div id="authLoggedOut">
+        <div class="section-label">Firebase Cloud Account</div>
+        <div class="input-wrap">
+          <span class="input-icon">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </span>
+          <input type="email" id="authEmail" placeholder="Email address...">
+        </div>
+        <div class="input-wrap">
+          <span class="input-icon">
+            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <input type="password" id="authPass" placeholder="Password (min 6 chars)...">
+        </div>
+        <div class="action-grid">
+          <button class="btn" onclick="doLogin()">
+            <span>Sign In</span>
+          </button>
+          <button class="btn" onclick="doSignup()">
+            <span>Sign Up</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Logged In View -->
+      <div id="authLoggedIn" style="display:none;">
+        <div class="profile-box">
+          <div class="profile-email" id="userEmailLabel">user@example.com</div>
+          <div class="profile-sub">Connected to Firebase Cloud</div>
+        </div>
+
+        <div class="section-label">Cloud Theme Backup</div>
+        <div class="action-grid mb-14">
+          <button class="btn" onclick="syncThemesToCloud()">
+            <span>Save to Cloud</span>
+          </button>
+          <button class="btn" onclick="loadThemesFromCloud()">
+            <span>Load from Cloud</span>
+          </button>
+        </div>
+
+        <button class="btn" onclick="doLogout()">
+          <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span>Sign Out</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- FULLSCREEN SETTINGS STUDIO -->
-  <div id="settingsOverlay" class="settings-overlay">
-    <div class="settings-shell">
-      <div class="settings-header">
-        <span class="settings-title">Settings</span>
+  <div id="settingsOverlay" class="modal-overlay">
+    <div class="modal-shell">
+      <div class="modal-header">
+        <span class="modal-title">Settings</span>
         <button class="icon-btn" onclick="closeSettings()" aria-label="Close Settings">
           <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -984,6 +1150,200 @@
   </div>
 
   <script>
+    // --- FIREBASE INITIALIZATION ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyCe9PY5mGrSOlzLOKByFrii_7_Vjlvv0AM",
+      authDomain: "pixel-8e2df.firebaseapp.com",
+      databaseURL: "https://pixel-8e2df-default-rtdb.firebaseio.com",
+      projectId: "pixel-8e2df",
+      storageBucket: "pixel-8e2df.firebasestorage.app",
+      messagingSenderId: "905163536146",
+      appId: "1:905163536146:web:d21f3ea2c65729a4f5a5cb",
+      measurementId: "G-DT9E32T5ZR"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+    let currentUser = null;
+
+    auth.onAuthStateChanged((user) => {
+      currentUser = user;
+      const dot = document.getElementById('authDot');
+      const loggedOut = document.getElementById('authLoggedOut');
+      const loggedIn = document.getElementById('authLoggedIn');
+      const shareLocked = document.getElementById('shareLockedBox');
+      const shareMain = document.getElementById('shareMainBox');
+
+      if (user) {
+        dot.classList.add('online');
+        loggedOut.style.display = 'none';
+        loggedIn.style.display = 'block';
+        document.getElementById('userEmailLabel').textContent = user.email;
+        shareLocked.style.display = 'none';
+        shareMain.style.display = 'block';
+      } else {
+        dot.classList.remove('online');
+        loggedOut.style.display = 'block';
+        loggedIn.style.display = 'none';
+        shareLocked.style.display = 'block';
+        shareMain.style.display = 'none';
+      }
+    });
+
+    function openAccount() { document.getElementById('accountOverlay').classList.add('open'); }
+    function closeAccount() { document.getElementById('accountOverlay').classList.remove('open'); }
+
+    async function doLogin() {
+      const email = document.getElementById('authEmail').value.trim();
+      const pass = document.getElementById('authPass').value;
+      if (!email || !pass) return showToast('Enter email & password');
+      try {
+        await auth.signInWithEmailAndPassword(email, pass);
+        showToast('Signed in');
+        closeAccount();
+      } catch (e) {
+        showToast(e.message.split('.')[0]);
+      }
+    }
+
+    async function doSignup() {
+      const email = document.getElementById('authEmail').value.trim();
+      const pass = document.getElementById('authPass').value;
+      if (!email || pass.length < 6) return showToast('Password min 6 chars');
+      try {
+        await auth.createUserWithEmailAndPassword(email, pass);
+        showToast('Account created');
+        closeAccount();
+      } catch (e) {
+        showToast(e.message.split('.')[0]);
+      }
+    }
+
+    async function doLogout() {
+      await auth.signOut();
+      showToast('Signed out');
+      closeAccount();
+    }
+
+    async function syncThemesToCloud() {
+      if (!currentUser) return showToast('Sign in first');
+      try {
+        await db.ref('users/' + currentUser.uid + '/themes').set({
+          folders: themeFolders,
+          active: activeFolderName,
+          updatedAt: Date.now()
+        });
+        showToast('Themes saved to cloud');
+      } catch (e) {
+        showToast('Cloud save failed');
+      }
+    }
+
+    async function loadThemesFromCloud() {
+      if (!currentUser) return showToast('Sign in first');
+      try {
+        const snap = await db.ref('users/' + currentUser.uid + '/themes').get();
+        if (!snap.exists()) return showToast('No cloud backup found');
+        const val = snap.val();
+        if (val.folders) {
+          themeFolders = val.folders;
+          activeFolderName = val.active || Object.keys(themeFolders)[0];
+          currentTheme = clone(themeFolders[activeFolderName] || BASE_THEME);
+          localStorage.setItem('ps_v2_folders', JSON.stringify(themeFolders));
+          localStorage.setItem('ps_v2_active', activeFolderName);
+          applyTheme(currentTheme);
+          renderFolders();
+          buildColorUI();
+          showToast('Themes restored from cloud');
+        }
+      } catch (e) {
+        showToast('Cloud load failed');
+      }
+    }
+
+    // --- AUTO-DELETE FILE SHARING ---
+    let selectedShareFile = null;
+
+    document.getElementById('shareFileInput').addEventListener('change', (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      if (f.size > 4.5 * 1024 * 1024) {
+        showToast('File too large (Max 4.5 MB)');
+        selectedShareFile = null;
+        return;
+      }
+      selectedShareFile = f;
+      const sizeKB = (f.size / 1024).toFixed(0);
+      document.getElementById('shareFileName').textContent = `${f.name} (${sizeKB} KB)`;
+    });
+
+    function uploadShareFile() {
+      if (!currentUser) return showToast('Sign in first');
+      if (!selectedShareFile) return showToast('Select a file first');
+
+      const btn = document.getElementById('btnSendShare');
+      btn.style.opacity = '0.5';
+      showToast('Uploading to cloud...');
+
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const code = Math.floor(100000 + Math.random() * 900000).toString();
+          await db.ref('shares/' + code).set({
+            name: selectedShareFile.name,
+            type: selectedShareFile.type || 'application/octet-stream',
+            data: ev.target.result,
+            createdAt: Date.now()
+          });
+          document.getElementById('shareCodeNum').textContent = code;
+          document.getElementById('shareCodeBox').classList.add('show');
+          showToast(`Code ready: ${code}`);
+        } catch (err) {
+          showToast('Upload failed (check size/rules)');
+        } finally {
+          btn.style.opacity = '1';
+        }
+      };
+      reader.readAsDataURL(selectedShareFile);
+    }
+
+    function copyShareCode() {
+      const code = document.getElementById('shareCodeNum').textContent;
+      navigator.clipboard.writeText(code).then(() => showToast('Code copied'));
+    }
+
+    async function receiveShareFile() {
+      if (!currentUser) return showToast('Sign in first');
+      const code = document.getElementById('receiveCodeInput').value.trim();
+      if (code.length !== 6) return showToast('Enter 6-digit code');
+
+      showToast('Fetching file...');
+      try {
+        const ref = db.ref('shares/' + code);
+        const snap = await ref.get();
+        if (!snap.exists()) return showToast('Invalid or already deleted code');
+
+        const fileObj = snap.val();
+
+        // Trigger download
+        const link = document.createElement('a');
+        link.href = fileObj.data;
+        link.download = fileObj.name || ('shared_' + code);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // PERMANENTLY DELETE FROM FIREBASE IMMEDIATELY
+        await ref.remove();
+        document.getElementById('receiveCodeInput').value = '';
+        showToast('Downloaded & deleted from Firebase');
+      } catch (err) {
+        showToast('Download failed');
+      }
+    }
+
+    // --- CORE APP & CANVAS ---
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const emptyState = document.getElementById('emptyState');
@@ -992,6 +1352,7 @@
     const toast = document.getElementById('toast');
     const toastText = document.getElementById('toastText');
     const wallpaperLayer = document.getElementById('wallpaperLayer');
+    const stageCard = document.getElementById('stageCard');
     let toastTimer = null;
     let imgLoaded = false;
 
@@ -1286,7 +1647,7 @@
       toastText.textContent = msg;
       toast.classList.add('show');
       clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
     }
 
     function setLoading(state) {
@@ -1299,6 +1660,7 @@
       document.getElementById('tab-' + tab).classList.add('active');
       document.getElementById('btn-tab-' + tab).classList.add('active');
       document.getElementById('dockIndicator').style.transform = `translateX(${idx * 100}%)`;
+      stageCard.style.display = tab === 'share' ? 'none' : 'block';
     }
 
     function toggleKey() {
