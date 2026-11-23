@@ -1,16 +1,16 @@
 (function() {
-  if (window.__pixelGitHubCoreSuiteV4) return;
-  window.__pixelGitHubCoreSuiteV4 = true;
+  if (window.__pixelGitHubCoreSuiteV5) return;
+  window.__pixelGitHubCoreSuiteV5 = true;
 
   // Remove any old brightness dim overlay from live patch
   const oldDim = document.getElementById('psSavedBrightnessOverlay');
   if (oldDim) oldDim.remove();
 
   // =========================================================
-  // 1. INSTANT + PER-USER CLOUD SETTINGS (ZERO STARTUP DELAY)
+  // 1. 100% LOCAL APP SETTINGS (NO FIREBASE UPLOAD AT ALL)
   // =========================================================
-  let settingsSyncTimer = null;
-  let applyingCloudSettingsFlag = false;
+  let settingsLocalTimer = null;
+  let applyingLocalSettingsFlag = false;
 
   function getActiveUid() {
     if (typeof currentUser !== 'undefined' && currentUser && currentUser.uid) {
@@ -20,79 +20,68 @@
       return auth.currentUser.uid;
     }
     try {
-      const cachedUid = localStorage.getItem('ps_last_auth_uid');
-      if (cachedUid) return cachedUid;
-    } catch (e) {}
-    return null;
+      return localStorage.getItem('ps_last_auth_uid') || null;
+    } catch (e) {
+      return null;
+    }
   }
 
   function getSettingsLocalKey(uid) {
-    return 'ps_cloud_settings_' + (uid || 'guest');
+    return 'ps_local_app_settings_' + (uid || 'guest');
   }
 
   function collectCurrentSettingsSnapshot() {
     const snapData = {};
-    const fields = Array.from(document.querySelectorAll('input, select, textarea'));
-
+    const fields = document.querySelectorAll('input, select, textarea');
     fields.forEach((el, idx) => {
       if (
         el.closest('#liveChatOverlay') ||
         el.closest('#pixel3DGuideOverlay') ||
         el.closest('#secretStudioOverlay') ||
         el.closest('.secret-overlay')
-      ) {
-        return;
-      }
+      ) return;
       if (el.type === 'password' || el.type === 'file') return;
 
-      const key = el.id || el.name || ('field_' + el.tagName.toLowerCase() + '_' + idx);
+      const key = el.id || el.name || ('f_' + idx);
       if (el.type === 'checkbox') {
         snapData[key] = { kind: 'checkbox', checked: Boolean(el.checked) };
       } else if (el.type === 'radio') {
-        if (el.checked) {
-          const groupKey = el.name || key;
-          snapData[groupKey] = { kind: 'radio', value: el.value };
-        }
+        if (el.checked) snapData[el.name || key] = { kind: 'radio', value: el.value };
       } else {
         snapData[key] = { kind: 'value', value: el.value };
       }
     });
-
     return snapData;
   }
 
   function applySettingsSnapshotToUI(snapData) {
     if (!snapData || typeof snapData !== 'object') return;
-    applyingCloudSettingsFlag = true;
+    applyingLocalSettingsFlag = true;
 
-    const fields = Array.from(document.querySelectorAll('input, select, textarea'));
+    const fields = document.querySelectorAll('input, select, textarea');
     fields.forEach((el, idx) => {
       if (
         el.closest('#liveChatOverlay') ||
         el.closest('#pixel3DGuideOverlay') ||
         el.closest('#secretStudioOverlay') ||
         el.closest('.secret-overlay')
-      ) {
-        return;
-      }
+      ) return;
       if (el.type === 'password' || el.type === 'file') return;
 
-      const key = el.id || el.name || ('field_' + el.tagName.toLowerCase() + '_' + idx);
-      if (el.type === 'checkbox' && snapData[key] && snapData[key].kind === 'checkbox') {
-        const targetChecked = Boolean(snapData[key].checked);
-        if (el.checked !== targetChecked) {
-          el.checked = targetChecked;
+      const key = el.id || el.name || ('f_' + idx);
+      if (el.type === 'checkbox' && snapData[key]?.kind === 'checkbox') {
+        const want = Boolean(snapData[key].checked);
+        if (el.checked !== want) {
+          el.checked = want;
           el.dispatchEvent(new Event('change', { bubbles: true }));
         }
       } else if (el.type === 'radio') {
-        const groupKey = el.name || key;
-        if (snapData[groupKey] && snapData[groupKey].kind === 'radio' && el.value === snapData[groupKey].value) {
-          if (!el.checked) {
-            el.checked = true;
-            el.dispatchEvent(new Event('change', { bubbles: true }));
-          }
+        const gKey = el.name || key;
+        if (snapData[gKey]?.kind === 'radio' && el.value === snapData[gKey].value && !el.checked) {
+          el.checked = true;
+          el.dispatchEvent(new Event('change', { bubbles: true }));
         }
-      } else if (snapData[key] && snapData[key].kind === 'value') {
+      } else if (snapData[key]?.kind === 'value') {
         if (document.activeElement !== el && String(el.value) !== String(snapData[key].value)) {
           el.value = snapData[key].value;
           el.dispatchEvent(new Event('input', { bubbles: true }));
@@ -101,89 +90,65 @@
       }
     });
 
-    setTimeout(() => {
-      applyingCloudSettingsFlag = false;
-    }, 80);
+    setTimeout(() => { applyingLocalSettingsFlag = false; }, 100);
+  }
+
+  function saveSettingsToLocalSystem() {
+    if (applyingLocalSettingsFlag) return;
+    const uid = getActiveUid();
+    const payload = { items: collectCurrentSettingsSnapshot(), updatedAt: Date.now() };
+    try {
+      localStorage.setItem(getSettingsLocalKey(uid), JSON.stringify(payload));
+      localStorage.setItem(getSettingsLocalKey(null), JSON.stringify(payload));
+    } catch (e) {}
   }
 
   function applyLocalSettingsInstant() {
     const uid = getActiveUid();
-    const raw = localStorage.getItem(getSettingsLocalKey(uid)) || localStorage.getItem(getSettingsLocalKey(null));
+    const raw =
+      (uid ? localStorage.getItem(getSettingsLocalKey(uid)) : null) ||
+      localStorage.getItem(getSettingsLocalKey(null));
     if (!raw) return;
     try {
       const parsed = JSON.parse(raw);
-      if (parsed && parsed.items) {
-        applySettingsSnapshotToUI(parsed.items);
-      }
+      if (parsed?.items) applySettingsSnapshotToUI(parsed.items);
     } catch (e) {}
   }
 
-  async function saveUserSettingsToFirebase() {
-    if (applyingCloudSettingsFlag) return;
-    const uid = getActiveUid();
-    const snapshot = collectCurrentSettingsSnapshot();
-    const payload = { items: snapshot, updatedAt: Date.now() };
-
-    localStorage.setItem(getSettingsLocalKey(uid), JSON.stringify(payload));
-    if (!uid) {
-      localStorage.setItem(getSettingsLocalKey(null), JSON.stringify(payload));
-    }
-
-    if (uid && typeof db !== 'undefined' && db) {
-      try {
-        await db.ref('users/' + uid + '/settings').set(payload);
-      } catch (e) {}
-    }
+  function scheduleLocalSettingsSave() {
+    if (applyingLocalSettingsFlag) return;
+    clearTimeout(settingsLocalTimer);
+    settingsLocalTimer = setTimeout(saveSettingsToLocalSystem, 250);
   }
 
-  async function loadUserSettingsFromFirebase(user) {
-    const uid = (user && user.uid) ? user.uid : getActiveUid();
-    if (!uid) return;
-    try { localStorage.setItem('ps_last_auth_uid', uid); } catch (e) {}
-
-    applyLocalSettingsInstant();
-
-    if (typeof db !== 'undefined' && db) {
-      try {
-        const snap = await db.ref('users/' + uid + '/settings').get();
-        if (snap.exists() && snap.val() && snap.val().items) {
-          const cloudPayload = snap.val();
-          localStorage.setItem(getSettingsLocalKey(uid), JSON.stringify(cloudPayload));
-          applySettingsSnapshotToUI(cloudPayload.items);
-        }
-      } catch (e) {}
-    }
-  }
-
-  function scheduleSettingsSave() {
-    if (applyingCloudSettingsFlag) return;
-    clearTimeout(settingsSyncTimer);
-    settingsSyncTimer = setTimeout(() => {
-      saveUserSettingsToFirebase();
-    }, 150);
-  }
-
-  function attachUniversalSettingsListeners() {
+  function attachLocalSettingsListeners() {
     document.querySelectorAll('input, select, textarea').forEach((el) => {
-      if (el.__psCloudBound) return;
-      el.__psCloudBound = true;
-      el.addEventListener('input', scheduleSettingsSave);
-      el.addEventListener('change', scheduleSettingsSave);
+      if (el.__psLocalOnlyBound) return;
+      el.__psLocalOnlyBound = true;
+      el.addEventListener('change', scheduleLocalSettingsSave);
+      if (el.type === 'range' || el.type === 'color') {
+        el.addEventListener('input', scheduleLocalSettingsSave);
+      }
     });
   }
 
   applyLocalSettingsInstant();
-  attachUniversalSettingsListeners();
+  attachLocalSettingsListeners();
   document.addEventListener('DOMContentLoaded', () => {
     applyLocalSettingsInstant();
-    attachUniversalSettingsListeners();
+    attachLocalSettingsListeners();
   });
 
-  const universalObserver = new MutationObserver(() => {
-    attachUniversalSettingsListeners();
-    applyLocalSettingsInstant();
+  const localSettingsObserver = new MutationObserver(() => {
+    attachLocalSettingsListeners();
   });
-  universalObserver.observe(document.documentElement, { childList: true, subtree: true });
+  if (document.body) {
+    localSettingsObserver.observe(document.body, { childList: true, subtree: true });
+  } else {
+    document.addEventListener('DOMContentLoaded', () => {
+      if (document.body) localSettingsObserver.observe(document.body, { childList: true, subtree: true });
+    });
+  }
 
   // =========================================================
   // 2. TOP BAR CHAT BUTTON (NO BOTTOM DOCK OVERLAP)
@@ -301,11 +266,11 @@
         </div>
       </div>
 
-      <!-- VIEW 3: LOCAL AI MODE WITH NAME MEMORY (100% LOCAL STORAGE) -->
+      <!-- VIEW 3: LOCAL AI MODE WITH NAME + CHAT MEMORY (100% LOCAL) -->
       <div id="localAIModeView" style="display:none; flex:1; flex-direction:column; min-height:0;">
         <div style="padding:8px 14px; display:flex; align-items:center; justify-content:space-between; gap:8px; background:rgba(56,189,248,0.07); border-bottom:1px solid rgba(255,255,255,0.09); flex-shrink:0;">
           <div id="aiMemoryStatusLabel" style="font-size:11px; color:#7dd3fc;">
-            Local AI • Name memory: Not set yet
+            Local AI • Name + Chat memory
           </div>
           <button type="button" onclick="clearLocalAIHistory()" style="padding:5px 9px; border-radius:10px; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.06); color:var(--text-secondary); font-size:11px; cursor:pointer;">Clear Chat</button>
         </div>
@@ -686,11 +651,11 @@
   };
 
   // =========================================================
-  // 4. LOCAL-ONLY AI MODE WITH SAVED USER NAME MEMORY
+  // 4. LOCAL-ONLY AI MODE WITH NAME + CHAT MEMORY (100% LOCAL)
   // =========================================================
   function getLocalAIKey() {
     const uid = getActiveUid() || 'guest';
-    return 'ps_local_ai_chat_v2_' + uid;
+    return 'ps_local_ai_chat_v3_' + uid;
   }
 
   function getSavedUserNameKey() {
@@ -723,7 +688,7 @@
       const m = text.match(re);
       if (m && m[1]) {
         const candidate = m[1].trim();
-        const ignoreWords = ['hoon', 'hu', 'hai', 'rehan', 'kya', 'kaise', 'ek', 'ai', 'user'];
+        const ignoreWords = ['hoon', 'hu', 'hai', 'kya', 'kaise', 'ek', 'ai', 'user'];
         if (!ignoreWords.includes(candidate.toLowerCase())) {
           return candidate;
         }
@@ -736,9 +701,10 @@
     const lbl = document.getElementById('aiMemoryStatusLabel');
     if (!lbl) return;
     const savedName = getSavedUserName();
+    const count = loadLocalAIMessages().length;
     lbl.textContent = savedName
-      ? `Local AI • Remembered name: ${savedName}`
-      : 'Local AI • Name memory: Not set yet';
+      ? `Local AI • Name: ${savedName} • Chat (${count})`
+      : `Local AI • Chat (${count})`;
   }
 
   function loadLocalAIMessages() {
@@ -751,8 +717,9 @@
 
   function saveLocalAIMessages(list) {
     try {
-      localStorage.setItem(getLocalAIKey(), JSON.stringify(list.slice(-50)));
+      localStorage.setItem(getLocalAIKey(), JSON.stringify(list.slice(-80)));
     } catch (e) {}
+    updateAIMemoryLabel();
   }
 
   function renderLocalAIMessages() {
@@ -763,8 +730,8 @@
     if (!list.length) {
       const savedName = getSavedUserName();
       box.innerHTML = `<div style="color:var(--text-secondary); font-size:12.5px; text-align:center; margin:auto; line-height:1.5;">
-        ${savedName ? `Welcome back, <strong>${savedName}</strong>! ` : ''}AI Mode local memory ke saath ready hai.<br>
-        Apna naam batayein—AI usse apne local memory mein yaad rakhega.
+        ${savedName ? `Welcome back, <strong>${savedName}</strong>! ` : ''}AI Mode naam aur pichli chat dono local memory mein yaad rakhega.<br>
+        100% data sirf aapke device ke local storage mein rehta hai.
       </div>`;
       return;
     }
@@ -792,7 +759,7 @@
       document.getElementById('localAIModeView').style.display = 'flex';
       document.getElementById('chatBackToListBtn').style.display = 'flex';
       document.getElementById('fullChatHeaderTitle').textContent = 'AI Mode';
-      document.getElementById('fullChatHeaderSub').textContent = 'Local Name Memory • 100% Device Storage';
+      document.getElementById('fullChatHeaderSub').textContent = 'Name + Chat Memory • 100% Local Storage';
       renderLocalAIMessages();
       setTimeout(() => document.getElementById('localAIInput').focus(), 100);
     } else {
@@ -803,7 +770,7 @@
   window.clearLocalAIHistory = function() {
     localStorage.removeItem(getLocalAIKey());
     renderLocalAIMessages();
-    showToast('Local chat history cleared (name memory kept)');
+    showToast('Local chat history cleared (saved name kept)');
   };
 
   window.sendLocalAIMessage = async function() {
@@ -818,29 +785,37 @@
     }
 
     const list = loadLocalAIMessages();
-    list.push({ role: 'user', text: text });
+    list.push({ role: 'user', text: text, ts: Date.now() });
     saveLocalAIMessages(list);
     renderLocalAIMessages();
 
     const savedName = getSavedUserName();
-    const recentHistory = list.slice(-6).map((item) => `${item.role === 'user' ? 'User' : 'Assistant'}: ${item.text}`).join('\n');
+    const historySlice = list.slice(-10).map((item) => {
+      const speaker = item.role === 'user' ? (savedName || 'User') : 'Assistant';
+      return `${speaker}: ${item.text}`;
+    }).join('\n');
+
     const promptWithMemory = savedName
-      ? `Remember: The user's name is "${savedName}". Always remember their name naturally in conversation.\n\nRecent chat:\n${recentHistory}\n\nRespond concisely and helpfully.`
-      : `Recent chat:\n${recentHistory}\n\nRespond concisely and helpfully.`;
+      ? `The user's name is "${savedName}". Always remember their name and the conversation history below.\n\nConversation history:\n${historySlice}\n\nReply naturally and concisely.`
+      : `Remember and continue the conversation history below.\n\nConversation history:\n${historySlice}\n\nReply naturally and concisely.`;
 
     try {
       const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(promptWithMemory)}`);
       const replyText = (await res.text() || '').trim();
       const updated = loadLocalAIMessages();
-      updated.push({ role: 'ai', text: replyText || (savedName ? `Ji ${savedName}, main aapki baat samajh gaya.` : 'Main aapki baat samajh gaya.') });
+      updated.push({
+        role: 'ai',
+        text: replyText || (savedName ? `Ji ${savedName}, main pichli baat yaad rakhe hue hoon.` : 'Main pichli baat yaad rakhe hue hoon.'),
+        ts: Date.now()
+      });
       saveLocalAIMessages(updated);
       renderLocalAIMessages();
     } catch (e) {
       const updated = loadLocalAIMessages();
       const fallback = savedName
-        ? `Ji ${savedName}, aapka naam meri local memory mein save hai, lekin abhi AI server se connect nahi ho paya.`
-        : 'Abhi AI server se connect nahi ho paya. Thodi der baad try karein.';
-      updated.push({ role: 'ai', text: fallback });
+        ? `Ji ${savedName}, aapka naam aur pichli chat local storage mein safe hai, par abhi AI server se connect nahi ho paya.`
+        : 'Pichli chat local storage mein safe hai, par abhi AI server se connect nahi ho paya.';
+      updated.push({ role: 'ai', text: fallback, ts: Date.now() });
       saveLocalAIMessages(updated);
       renderLocalAIMessages();
     }
@@ -1048,9 +1023,10 @@
     auth.onAuthStateChanged((user) => {
       ensureTopChatButton();
       if (user) {
+        try { localStorage.setItem('ps_last_auth_uid', user.uid); } catch (e) {}
         loadMyPermanentUsername(user);
         loadFriendsList();
-        loadUserSettingsFromFirebase(user);
+        applyLocalSettingsInstant();
       } else {
         myPermanentUsername = '';
         friendsList = [];
@@ -1061,6 +1037,6 @@
   if (typeof currentUser !== 'undefined' && currentUser) {
     loadMyPermanentUsername(currentUser);
     loadFriendsList();
-    loadUserSettingsFromFirebase(currentUser);
+    applyLocalSettingsInstant();
   }
 })();
