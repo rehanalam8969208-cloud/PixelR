@@ -22,7 +22,7 @@
     <span id="toastText">Ready</span>
   </div>
 
-  <!-- Top Bar (Tap "Pixel Studio" 5 times for Secret Admin Updater) -->
+  <!-- Top Bar (Tap "Pixel Studio" 5 times for Secret Admin Studio) -->
   <div class="topbar">
     <div class="brand" id="secretTrigger" style="cursor:pointer; user-select:none;">
       <div class="brand-icon">
@@ -206,50 +206,147 @@
     </button>
   </div>
 
-  <!-- SECRET ADMIN LIVE CODE UPDATER MODAL -->
+  <!-- EASY DARK PASSWORD POPUP (NO WHITE BROWSER PROMPT) -->
+  <div id="customPassModal" class="modal-overlay" style="z-index: 2500;">
+    <div class="modal-shell" style="max-width: 340px; margin: auto;">
+      <div class="panel-card active" id="passPopupCard" style="display: block;">
+        <div class="section-label" style="text-align: center;">Secret Access</div>
+        <p style="font-size: 13px; color: var(--text-secondary); text-align: center; margin: 0 0 14px 0;">
+          Enter secret password to open studio
+        </p>
+        <div class="input-wrap">
+          <span class="input-icon">
+            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <input type="password" id="customPassInput" placeholder="Enter password...">
+        </div>
+        <div class="action-grid" style="margin-bottom: 0;">
+          <button class="btn" onclick="closePassPopup()">Cancel</button>
+          <button class="btn" onclick="verifyPassPopup()">Unlock</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EASY SECRET ADMIN STUDIO (4 SIMPLE TABS: Add Option, Style, Code, Pass) -->
   <div id="secretOverlay" class="modal-overlay">
     <div class="modal-shell">
       <div class="modal-header">
-        <span class="modal-title">Live Code Engine</span>
+        <span class="modal-title">Secret Studio</span>
         <button class="icon-btn" onclick="closeSecret()" aria-label="Close">
           <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
 
-      <div class="section-label">Change Secret Password</div>
-      <div class="input-wrap">
-        <span class="input-icon">
-          <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        </span>
-        <input type="text" id="newSecretPassInput" placeholder="Enter new secret password...">
-      </div>
-      <button class="btn mb-14" onclick="saveSecretPass()">
-        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-        <span>Update Secret Password</span>
-      </button>
-
-      <div class="divider"></div>
-
-      <div class="section-label">Admin Status</div>
-      <div class="profile-box" style="padding:12px; margin-bottom:14px;">
-        <div class="profile-email" id="adminStatusEmail" style="font-size:13px;">Not Signed In</div>
-        <div class="profile-sub">Changes push live to all users instantly</div>
+      <div class="profile-box" style="padding:10px 14px; margin-bottom:12px;">
+        <div class="profile-email" id="adminStatusEmail" style="font-size:12.5px; margin-bottom:2px;">Not Signed In</div>
+        <div class="profile-sub">Publish updates live to all users without GitHub</div>
       </div>
 
-      <div class="section-label">Live CSS Patch (Design / Buttons)</div>
-      <textarea id="liveCssBox" class="code-box" style="height:130px;" placeholder="/* Example: .btn { border-radius: 99px; } */" spellcheck="false"></textarea>
+      <div class="cat-bar">
+        <button class="cat-btn active" id="sbtn-add" onclick="switchSecretTab('add')">Add Option</button>
+        <button class="cat-btn" id="sbtn-style" onclick="switchSecretTab('style')">Style</button>
+        <button class="cat-btn" id="sbtn-code" onclick="switchSecretTab('code')">Code</button>
+        <button class="cat-btn" id="sbtn-pass" onclick="switchSecretTab('pass')">Pass</button>
+      </div>
 
-      <div class="section-label">Live JavaScript Patch (Features / Logic)</div>
-      <textarea id="liveJsBox" class="code-box" style="height:150px;" placeholder="// Example: showToast('App Updated Live!');" spellcheck="false"></textarea>
+      <!-- 1. EASY NEW OPTION / BUTTON BUILDER -->
+      <div id="stab-add" class="cat-page active">
+        <div class="section-label">Where to Add New Option</div>
+        <div class="input-wrap">
+          <select id="newOptionTarget" class="easy-select">
+            <option value="#tab-lock">Lock Tab (Inside Lock Card)</option>
+            <option value="#tab-number">Codec Tab (Inside Codec Card)</option>
+            <option value="#tab-share">Share Tab (Inside Share Card)</option>
+            <option value="body">Main Screen (Bottom Area)</option>
+          </select>
+        </div>
 
-      <div class="action-grid">
-        <button class="btn" onclick="publishLiveCode()">
+        <div class="section-label">Button / Option Label</div>
+        <div class="input-wrap">
+          <input type="text" id="newOptionLabel" placeholder="Example: Clear Key" style="padding-left:14px;">
+        </div>
+
+        <div class="section-label">What Happens on Tap (Simple Action)</div>
+        <textarea id="newOptionAction" class="code-box" style="height:110px;" placeholder="Example: document.getElementById('keyInput').value = ''; showToast('Key Cleared!');" spellcheck="false"></textarea>
+
+        <div class="action-grid">
+          <button class="btn" onclick="addQuickOptionLive()">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Add & Publish</span>
+          </button>
+          <button class="btn" onclick="clearLiveCode()">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+            <span>Reset Live</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. EASY POPUP & APP STYLE EDITOR -->
+      <div id="stab-style" class="cat-page">
+        <div class="section-label">Quick Popup & Button Color</div>
+        <div class="color-list" style="margin-bottom:12px;">
+          <div class="color-row">
+            <span>Popup Box Color</span>
+            <div class="color-picker-wrap">
+              <input type="color" id="quickPopupBg" value="#121622" oninput="applyQuickPopupTheme()">
+            </div>
+          </div>
+          <div class="color-row">
+            <span>Popup Border & Accent</span>
+            <div class="color-picker-wrap">
+              <input type="color" id="quickPopupAccent" value="#38bdf8" oninput="applyQuickPopupTheme()">
+            </div>
+          </div>
+        </div>
+
+        <div class="section-label">Live CSS Editor</div>
+        <textarea id="liveCssBox" class="code-box" style="height:150px;" placeholder="/* Edit app or popup design here */" spellcheck="false"></textarea>
+
+        <div class="action-grid">
+          <button class="btn" onclick="publishLiveCode()">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Publish Style</span>
+          </button>
+          <button class="btn" onclick="clearLiveCode()">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+            <span>Clear Patch</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. FULL LIVE HTML + JS CODE EDITOR -->
+      <div id="stab-code" class="cat-page">
+        <div class="section-label">Live HTML Snippet (Custom Elements)</div>
+        <textarea id="liveHtmlBox" class="code-box" style="height:105px;" placeholder="<!-- Optional custom HTML -->" spellcheck="false"></textarea>
+
+        <div class="section-label">Live JavaScript Code (Full Logic)</div>
+        <textarea id="liveJsBox" class="code-box" style="height:145px;" placeholder="// Write or edit JavaScript logic here" spellcheck="false"></textarea>
+
+        <div class="action-grid">
+          <button class="btn" onclick="publishLiveCode()">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Publish Code</span>
+          </button>
+          <button class="btn" onclick="clearLiveCode()">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+            <span>Clear Patch</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 4. SECRET PASSWORD MANAGER -->
+      <div id="stab-pass" class="cat-page">
+        <div class="section-label">Change Secret Popup Password</div>
+        <div class="input-wrap">
+          <span class="input-icon">
+            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <input type="text" id="newSecretPassInput" placeholder="Enter new secret password...">
+        </div>
+        <button class="btn" onclick="saveSecretPass()">
           <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-          <span>Publish Live</span>
-        </button>
-        <button class="btn" onclick="clearLiveCode()">
-          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
-          <span>Clear Patch</span>
+          <span>Update Secret Password</span>
         </button>
       </div>
     </div>
