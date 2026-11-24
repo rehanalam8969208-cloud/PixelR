@@ -108,7 +108,7 @@
 
   <!-- TAB 2: NUMBER CODEC -->
   <div id="tab-number" class="panel-card">
-    <div class="section-label">Number Codec (.txt)</div>
+    <div class="section-label">Number Codec (.txt & Offline Box)</div>
 
     <label for="fileInputNum" class="upload-btn">
       <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -118,10 +118,10 @@
 
     <button class="btn mb-10" onclick="photoToNumbers()">
       <svg viewBox="0 0 24 24"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
-      <span>Encode to Numbers (.txt)</span>
+      <span>Generate Offline Code</span>
     </button>
 
-    <div class="section-label" style="margin-top:10px;">Offline Code Box (No Firebase)</div>
+    <div class="section-label" style="margin-top:8px;">Offline Code Box (No Firebase)</div>
     <textarea id="offlineCodecBox" class="code-box" style="height:82px; margin-bottom:8px;" placeholder="Encode karne par code yahan aayega, ya code paste karke Decode Photo dabayein..." spellcheck="false"></textarea>
     <div id="offlineCodecStatus" style="font-size:11px; color:var(--text-secondary); margin-bottom:10px;">
       100% Offline • Auto-clears in 5 mins
@@ -218,7 +218,7 @@
     </button>
   </div>
 
-  <!-- EASY DARK PASSWORD POPUP (NO WHITE BROWSER PROMPT) -->
+  <!-- EASY DARK PASSWORD POPUP -->
   <div id="customPassModal" class="modal-overlay" style="z-index: 2500;">
     <div class="modal-shell" style="max-width: 340px; margin: auto;">
       <div class="panel-card active" id="passPopupCard" style="display: block;">
@@ -240,7 +240,7 @@
     </div>
   </div>
 
-  <!-- NO-CODE FUTURISTIC SECRET STUDIO -->
+  <!-- NO-CODE FUTURISTIC SECRET STUDIO (WITH LIVE GLASS & GEOMETRY + READYMADE ON/OFF OPTIONS) -->
   <div id="secretOverlay" class="modal-overlay">
     <div class="modal-shell">
       <div class="modal-header">
@@ -252,22 +252,22 @@
 
       <div class="profile-box" style="padding:10px 14px; margin-bottom:12px;">
         <div class="profile-email" id="adminStatusEmail" style="font-size:12.5px; margin-bottom:2px;">Local + Cloud Ready</div>
-        <div class="profile-sub">No code needed • Themes, Custom Options, BG Push & Highlighter</div>
+        <div class="profile-sub">100% No-Code • Themes, Readymade On/Off Options, Glass & Geometry, BG Push</div>
       </div>
 
       <div class="cat-bar">
         <button class="cat-btn active" id="sbtn-themes" onclick="switchSecretTab('themes')">Themes</button>
         <button class="cat-btn" id="sbtn-options" onclick="switchSecretTab('options')">Options</button>
-        <button class="cat-btn" id="sbtn-bg" onclick="switchSecretTab('bg')">BG & Text</button>
+        <button class="cat-btn" id="sbtn-bg" onclick="switchSecretTab('bg')">BG & Glass</button>
         <button class="cat-btn" id="sbtn-pass" onclick="switchSecretTab('pass')">Pass</button>
       </div>
 
-      <!-- TAB 1: MULTI-THEMES GALLERY -->
+      <!-- TAB 1: MULTI-THEMES GALLERY + GLOW -->
       <div id="stab-themes" class="cat-page active">
         <div class="section-label">10 Futuristic Themes (Tap to Apply)</div>
         <div id="studioThemesGrid" class="folder-grid" style="margin-bottom:12px;"></div>
 
-        <div class="section-label">Quick Glow & Glass Tuning</div>
+        <div class="section-label">Quick Glow & Text Size</div>
         <div class="slider-group">
           <div class="slider-head"><span>Neon / Accent Glow</span><span id="valStudioGlow">18px</span></div>
           <input type="range" id="slStudioGlow" min="0" max="40" value="18" oninput="applyStudioVisuals()">
@@ -279,51 +279,47 @@
 
         <div class="action-grid">
           <button class="btn" type="button" onclick="saveAndPublishStudio(true)"><span>Push to All Users</span></button>
-          <button class="btn" type="button" onclick="resetStudioExtras()"><span>Reset Extras</span></button>
+          <button class="btn" type="button" onclick="resetStudioExtras()"><span>Reset All Extras</span></button>
         </div>
       </div>
 
-      <!-- TAB 2: ADD & REMOVE CUSTOM OPTIONS -->
+      <!-- TAB 2: READYMADE ON/OFF OPTIONS (NO TYPING NEEDED) -->
       <div id="stab-options" class="cat-page">
-        <div class="section-label">Add New Option / Button (No Code)</div>
-        <div class="input-wrap">
-          <select id="studioOptPlace" class="easy-select">
-            <option value="#tab-lock">Lock Tab</option>
-            <option value="#tab-number">Codec Tab</option>
-            <option value="#tab-share">Share Tab</option>
-            <option value="body">Main Screen</option>
-          </select>
-        </div>
+        <div class="section-label">Readymade Options (Bas On / Off Karein)</div>
+        <p style="font-size:11.5px; color:var(--text-secondary); margin:0 0 10px 4px;">
+          Kuch likhne ki zaroorat nahi — jo option ON karenge woh app mein dikhne lagega aur sabke liye push bhi hoga:
+        </p>
+        <div id="readymadeOptionsToggles" class="color-list" style="margin-bottom:14px;"></div>
 
-        <div class="input-wrap">
-          <input type="text" id="studioOptName" placeholder="Option naam (e.g. Clear Key / Top Scroll)..." style="padding-left:14px;">
-        </div>
-
-        <div class="input-wrap">
-          <select id="studioOptActionType" class="easy-select">
-            <option value="toast">Action: Show Alert Message</option>
-            <option value="clear_key">Action: Clear Secret Key Box</option>
-            <option value="scroll_top">Action: Scroll To Top</option>
-            <option value="toggle_highlight">Action: Toggle Text Highlighter</option>
-            <option value="open_settings">Action: Open Settings</option>
-            <option value="open_chat">Action: Open Chat</option>
-          </select>
-        </div>
-
-        <div class="input-wrap" id="studioOptMsgWrap">
-          <input type="text" id="studioOptMsg" placeholder="Alert message (optional)..." style="padding-left:14px;">
-        </div>
-
-        <button class="btn mb-14" type="button" onclick="addStudioOptionItem()">
-          <span>+ Add Option</span>
+        <button class="btn" type="button" onclick="saveAndPublishStudio(true)">
+          <span>Save & Push Options to All Users</span>
         </button>
-
-        <div class="section-label">Added Options (Tap Remove to Delete)</div>
-        <div id="studioAddedOptionsList" class="color-list"></div>
       </div>
 
-      <!-- TAB 3: BROADCAST BG PHOTO + TEXT HIGHLIGHTER + FUTURISTIC EXTRAS -->
+      <!-- TAB 3: BROADCAST BG PHOTO + LIVE GLASS & GEOMETRY + TEXT HIGHLIGHTER -->
       <div id="stab-bg" class="cat-page">
+        <div class="section-label">Live Glass & Geometry (Har Jagah Update)</div>
+        <div class="slider-group">
+          <div class="slider-head"><span>Glass Transparency</span><span id="valStudioAlpha">8%</span></div>
+          <input type="range" id="slStudioAlpha" min="0" max="45" value="8" oninput="onStudioGlassChange()">
+        </div>
+        <div class="slider-group">
+          <div class="slider-head"><span>Glass Blur</span><span id="valStudioBlur">24px</span></div>
+          <input type="range" id="slStudioBlur" min="0" max="45" value="24" oninput="onStudioGlassChange()">
+        </div>
+        <div class="slider-group">
+          <div class="slider-head"><span>Border Visibility</span><span id="valStudioBorder">16%</span></div>
+          <input type="range" id="slStudioBorder" min="0" max="60" value="16" oninput="onStudioGlassChange()">
+        </div>
+        <div class="slider-group">
+          <div class="slider-head"><span>Wallpaper Dim</span><span id="valStudioDim">45%</span></div>
+          <input type="range" id="slStudioDim" min="0" max="85" value="45" oninput="onStudioGlassChange()">
+        </div>
+        <div class="slider-group" style="margin-bottom:14px;">
+          <div class="slider-head"><span>Corner Roundness</span><span id="valStudioRadius">26px</span></div>
+          <input type="range" id="slStudioRadius" min="8" max="34" value="26" oninput="onStudioGlassChange()">
+        </div>
+
         <div class="section-label">Background Photo (Local + Sabke Liye)</div>
         <div class="action-grid mb-10">
           <label for="studioBgFileInput" class="btn" style="padding:12px;">
@@ -345,7 +341,7 @@
           <input type="text" id="studioBgWatermarkText" placeholder="Screen ke peeche dikhane wala naam..." style="padding-left:14px;" oninput="applyStudioVisuals()">
         </div>
 
-        <div class="section-label">Text Highlighter (Highlight Text Easily)</div>
+        <div class="section-label">Text Highlighter</div>
         <div class="color-list" style="margin-bottom:10px;">
           <div class="color-row">
             <span>Highlight Color</span>
@@ -366,20 +362,8 @@
           <button class="btn" type="button" onclick="clearTextHighlighter()"><span>Clear Highlight</span></button>
         </div>
 
-        <div class="section-label">Futuristic Extras</div>
-        <div class="color-list" style="margin-bottom:12px;">
-          <label class="color-row" style="cursor:pointer;">
-            <span>HUD Corner Badge (Future Mode)</span>
-            <input type="checkbox" id="studioHudBadgeToggle" onchange="applyStudioVisuals()">
-          </label>
-          <label class="color-row" style="cursor:pointer;">
-            <span>Subtle Cyber Grid Overlay</span>
-            <input type="checkbox" id="studioCyberGridToggle" onchange="applyStudioVisuals()">
-          </label>
-        </div>
-
         <button class="btn" type="button" onclick="saveAndPublishStudio(true)">
-          <span>Apply & Push to All Users</span>
+          <span>Apply & Push Everything to All Users</span>
         </button>
       </div>
 
