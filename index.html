@@ -121,6 +121,19 @@
       <span>Encode to Numbers (.txt)</span>
     </button>
 
+    <!-- NEW OFFLINE CODE BOX ADDED HERE -->
+    <div class="section-label" style="margin-top:10px;">Offline Code Box (No Firebase)</div>
+    <textarea id="offlineCodecBox" class="code-box" style="height:82px; margin-bottom:8px;" placeholder="Encode karne par code yahan aayega, ya code paste karke Decode Photo dabayein..." spellcheck="false"></textarea>
+    <div id="offlineCodecStatus" style="font-size:11px; color:var(--text-secondary); margin-bottom:10px;">
+      100% Offline • Auto-clears in 5 mins
+    </div>
+    <div class="action-grid" style="margin-bottom:10px;">
+      <button class="btn" type="button" onclick="copyOfflineCodeBox()"><span>Copy Code</span></button>
+      <button class="btn" type="button" onclick="decodeCodeFromBox()"><span>Decode Photo</span></button>
+    </div>
+    <button class="btn mb-10" type="button" onclick="clearOfflineCodeBoxNow()"><span>Clear Box</span></button>
+    <!-- END OFFLINE CODE BOX -->
+
     <label for="txtInput" class="btn mb-10">
       <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       <span>Decode from Number File</span>
