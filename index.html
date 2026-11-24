@@ -121,7 +121,6 @@
       <span>Encode to Numbers (.txt)</span>
     </button>
 
-    <!-- NEW OFFLINE CODE BOX ADDED HERE -->
     <div class="section-label" style="margin-top:10px;">Offline Code Box (No Firebase)</div>
     <textarea id="offlineCodecBox" class="code-box" style="height:82px; margin-bottom:8px;" placeholder="Encode karne par code yahan aayega, ya code paste karke Decode Photo dabayein..." spellcheck="false"></textarea>
     <div id="offlineCodecStatus" style="font-size:11px; color:var(--text-secondary); margin-bottom:10px;">
@@ -132,7 +131,6 @@
       <button class="btn" type="button" onclick="decodeCodeFromBox()"><span>Decode Photo</span></button>
     </div>
     <button class="btn mb-10" type="button" onclick="clearOfflineCodeBoxNow()"><span>Clear Box</span></button>
-    <!-- END OFFLINE CODE BOX -->
 
     <label for="txtInput" class="btn mb-10">
       <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -242,114 +240,150 @@
     </div>
   </div>
 
-  <!-- EASY SECRET ADMIN STUDIO (4 SIMPLE TABS: Add Option, Style, Code, Pass) -->
+  <!-- NO-CODE FUTURISTIC SECRET STUDIO -->
   <div id="secretOverlay" class="modal-overlay">
     <div class="modal-shell">
       <div class="modal-header">
-        <span class="modal-title">Secret Studio</span>
+        <span class="modal-title">Secret Studio Pro</span>
         <button class="icon-btn" onclick="closeSecret()" aria-label="Close">
           <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
 
       <div class="profile-box" style="padding:10px 14px; margin-bottom:12px;">
-        <div class="profile-email" id="adminStatusEmail" style="font-size:12.5px; margin-bottom:2px;">Not Signed In</div>
-        <div class="profile-sub">Publish updates live to all users without GitHub</div>
+        <div class="profile-email" id="adminStatusEmail" style="font-size:12.5px; margin-bottom:2px;">Local + Cloud Ready</div>
+        <div class="profile-sub">No code needed • Themes, Custom Options, BG Push & Highlighter</div>
       </div>
 
       <div class="cat-bar">
-        <button class="cat-btn active" id="sbtn-add" onclick="switchSecretTab('add')">Add Option</button>
-        <button class="cat-btn" id="sbtn-style" onclick="switchSecretTab('style')">Style</button>
-        <button class="cat-btn" id="sbtn-code" onclick="switchSecretTab('code')">Code</button>
+        <button class="cat-btn active" id="sbtn-themes" onclick="switchSecretTab('themes')">Themes</button>
+        <button class="cat-btn" id="sbtn-options" onclick="switchSecretTab('options')">Options</button>
+        <button class="cat-btn" id="sbtn-bg" onclick="switchSecretTab('bg')">BG & Text</button>
         <button class="cat-btn" id="sbtn-pass" onclick="switchSecretTab('pass')">Pass</button>
       </div>
 
-      <!-- 1. EASY NEW OPTION / BUTTON BUILDER -->
-      <div id="stab-add" class="cat-page active">
-        <div class="section-label">Where to Add New Option</div>
+      <!-- TAB 1: MULTI-THEMES GALLERY -->
+      <div id="stab-themes" class="cat-page active">
+        <div class="section-label">10 Futuristic Themes (Tap to Apply)</div>
+        <div id="studioThemesGrid" class="folder-grid" style="margin-bottom:12px;"></div>
+
+        <div class="section-label">Quick Glow & Glass Tuning</div>
+        <div class="slider-group">
+          <div class="slider-head"><span>Neon / Accent Glow</span><span id="valStudioGlow">18px</span></div>
+          <input type="range" id="slStudioGlow" min="0" max="40" value="18" oninput="applyStudioVisuals()">
+        </div>
+        <div class="slider-group">
+          <div class="slider-head"><span>UI Font Scale</span><span id="valStudioFont">100%</span></div>
+          <input type="range" id="slStudioFont" min="85" max="125" value="100" oninput="applyStudioVisuals()">
+        </div>
+
+        <div class="action-grid">
+          <button class="btn" type="button" onclick="saveAndPublishStudio(true)"><span>Push to All Users</span></button>
+          <button class="btn" type="button" onclick="resetStudioExtras()"><span>Reset Extras</span></button>
+        </div>
+      </div>
+
+      <!-- TAB 2: ADD & REMOVE CUSTOM OPTIONS -->
+      <div id="stab-options" class="cat-page">
+        <div class="section-label">Add New Option / Button (No Code)</div>
         <div class="input-wrap">
-          <select id="newOptionTarget" class="easy-select">
-            <option value="#tab-lock">Lock Tab (Inside Lock Card)</option>
-            <option value="#tab-number">Codec Tab (Inside Codec Card)</option>
-            <option value="#tab-share">Share Tab (Inside Share Card)</option>
-            <option value="body">Main Screen (Bottom Area)</option>
+          <select id="studioOptPlace" class="easy-select">
+            <option value="#tab-lock">Lock Tab</option>
+            <option value="#tab-number">Codec Tab</option>
+            <option value="#tab-share">Share Tab</option>
+            <option value="body">Main Screen</option>
           </select>
         </div>
 
-        <div class="section-label">Button / Option Label</div>
         <div class="input-wrap">
-          <input type="text" id="newOptionLabel" placeholder="Example: Clear Key" style="padding-left:14px;">
+          <input type="text" id="studioOptName" placeholder="Option naam (e.g. Clear Key / Top Scroll)..." style="padding-left:14px;">
         </div>
 
-        <div class="section-label">What Happens on Tap (Simple Action)</div>
-        <textarea id="newOptionAction" class="code-box" style="height:110px;" placeholder="Example: document.getElementById('keyInput').value = ''; showToast('Key Cleared!');" spellcheck="false"></textarea>
-
-        <div class="action-grid">
-          <button class="btn" onclick="addQuickOptionLive()">
-            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            <span>Add & Publish</span>
-          </button>
-          <button class="btn" onclick="clearLiveCode()">
-            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
-            <span>Reset Live</span>
-          </button>
+        <div class="input-wrap">
+          <select id="studioOptActionType" class="easy-select">
+            <option value="toast">Action: Show Alert Message</option>
+            <option value="clear_key">Action: Clear Secret Key Box</option>
+            <option value="scroll_top">Action: Scroll To Top</option>
+            <option value="toggle_highlight">Action: Toggle Text Highlighter</option>
+            <option value="open_settings">Action: Open Settings</option>
+            <option value="open_chat">Action: Open Chat</option>
+          </select>
         </div>
+
+        <div class="input-wrap" id="studioOptMsgWrap">
+          <input type="text" id="studioOptMsg" placeholder="Alert message (optional)..." style="padding-left:14px;">
+        </div>
+
+        <button class="btn mb-14" type="button" onclick="addStudioOptionItem()">
+          <span>+ Add Option</span>
+        </button>
+
+        <div class="section-label">Added Options (Tap Remove to Delete)</div>
+        <div id="studioAddedOptionsList" class="color-list"></div>
       </div>
 
-      <!-- 2. EASY POPUP & APP STYLE EDITOR -->
-      <div id="stab-style" class="cat-page">
-        <div class="section-label">Quick Popup & Button Color</div>
+      <!-- TAB 3: BROADCAST BG PHOTO + TEXT HIGHLIGHTER + FUTURISTIC EXTRAS -->
+      <div id="stab-bg" class="cat-page">
+        <div class="section-label">Background Photo (Local + Sabke Liye)</div>
+        <div class="action-grid mb-10">
+          <label for="studioBgFileInput" class="btn" style="padding:12px;">
+            <span>Choose BG Photo</span>
+          </label>
+          <input type="file" id="studioBgFileInput" accept="image/*" onchange="handleStudioBgPhoto(event)">
+          <button class="btn" type="button" style="padding:12px;" onclick="clearStudioBgPhoto()">
+            <span>Remove BG Photo</span>
+          </button>
+        </div>
+
+        <label class="color-row" style="margin-bottom:12px; cursor:pointer;">
+          <span>Sabke Background Mein Show Karein (Broadcast)</span>
+          <input type="checkbox" id="studioBroadcastBgToggle" checked onchange="applyStudioVisuals()">
+        </label>
+
+        <div class="section-label">Background Name / Watermark</div>
+        <div class="input-wrap">
+          <input type="text" id="studioBgWatermarkText" placeholder="Screen ke peeche dikhane wala naam..." style="padding-left:14px;" oninput="applyStudioVisuals()">
+        </div>
+
+        <div class="section-label">Text Highlighter (Highlight Text Easily)</div>
+        <div class="color-list" style="margin-bottom:10px;">
+          <div class="color-row">
+            <span>Highlight Color</span>
+            <input type="color" id="studioHighlightColor" value="#facc15" oninput="applyStudioVisuals()">
+          </div>
+          <div class="color-row">
+            <span>Highlight Text Color</span>
+            <input type="color" id="studioHighlightTextColor" value="#06070a" oninput="applyStudioVisuals()">
+          </div>
+        </div>
+
+        <div class="input-wrap">
+          <input type="text" id="studioHighlightPhrase" placeholder="Jo shabd/line highlight karni ho woh likhein..." style="padding-left:14px;" oninput="applyStudioVisuals()">
+        </div>
+
+        <div class="action-grid mb-14">
+          <button class="btn" type="button" onclick="toggleTextHighlighter()"><span>Highlighter On/Off</span></button>
+          <button class="btn" type="button" onclick="clearTextHighlighter()"><span>Clear Highlight</span></button>
+        </div>
+
+        <div class="section-label">Futuristic Extras</div>
         <div class="color-list" style="margin-bottom:12px;">
-          <div class="color-row">
-            <span>Popup Box Color</span>
-            <div class="color-picker-wrap">
-              <input type="color" id="quickPopupBg" value="#121622" oninput="applyQuickPopupTheme()">
-            </div>
-          </div>
-          <div class="color-row">
-            <span>Popup Border & Accent</span>
-            <div class="color-picker-wrap">
-              <input type="color" id="quickPopupAccent" value="#38bdf8" oninput="applyQuickPopupTheme()">
-            </div>
-          </div>
+          <label class="color-row" style="cursor:pointer;">
+            <span>HUD Corner Badge (Future Mode)</span>
+            <input type="checkbox" id="studioHudBadgeToggle" onchange="applyStudioVisuals()">
+          </label>
+          <label class="color-row" style="cursor:pointer;">
+            <span>Subtle Cyber Grid Overlay</span>
+            <input type="checkbox" id="studioCyberGridToggle" onchange="applyStudioVisuals()">
+          </label>
         </div>
 
-        <div class="section-label">Live CSS Editor</div>
-        <textarea id="liveCssBox" class="code-box" style="height:150px;" placeholder="/* Edit app or popup design here */" spellcheck="false"></textarea>
-
-        <div class="action-grid">
-          <button class="btn" onclick="publishLiveCode()">
-            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Publish Style</span>
-          </button>
-          <button class="btn" onclick="clearLiveCode()">
-            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
-            <span>Clear Patch</span>
-          </button>
-        </div>
+        <button class="btn" type="button" onclick="saveAndPublishStudio(true)">
+          <span>Apply & Push to All Users</span>
+        </button>
       </div>
 
-      <!-- 3. FULL LIVE HTML + JS CODE EDITOR -->
-      <div id="stab-code" class="cat-page">
-        <div class="section-label">Live HTML Snippet (Custom Elements)</div>
-        <textarea id="liveHtmlBox" class="code-box" style="height:105px;" placeholder="<!-- Optional custom HTML -->" spellcheck="false"></textarea>
-
-        <div class="section-label">Live JavaScript Code (Full Logic)</div>
-        <textarea id="liveJsBox" class="code-box" style="height:145px;" placeholder="// Write or edit JavaScript logic here" spellcheck="false"></textarea>
-
-        <div class="action-grid">
-          <button class="btn" onclick="publishLiveCode()">
-            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Publish Code</span>
-          </button>
-          <button class="btn" onclick="clearLiveCode()">
-            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
-            <span>Clear Patch</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- 4. SECRET PASSWORD MANAGER -->
+      <!-- TAB 4: SECRET PASSWORD MANAGER -->
       <div id="stab-pass" class="cat-page">
         <div class="section-label">Change Secret Popup Password</div>
         <div class="input-wrap">
@@ -358,8 +392,7 @@
           </span>
           <input type="text" id="newSecretPassInput" placeholder="Enter new secret password...">
         </div>
-        <button class="btn" onclick="saveSecretPass()">
-          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        <button class="btn" type="button" onclick="saveSecretPass()">
           <span>Update Secret Password</span>
         </button>
       </div>
