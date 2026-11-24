@@ -27,7 +27,7 @@ function getSecretPass() {
 }
 
 // --- 1. NO-CODE FUTURISTIC SECRET STUDIO ENGINE ---
-const STUDIO_STATE_KEY = 'ps_nocode_studio_v1';
+const STUDIO_STATE_KEY = 'ps_nocode_studio_v2';
 
 const STUDIO_THEMES = {
   "Neon Cyber": {
@@ -87,21 +87,60 @@ const STUDIO_THEMES = {
   "Pure Glass": clone(BASE_THEME)
 };
 
+// Readymade ON/OFF options — zero typing needed!
+const READYMADE_OPTIONS_CATALOG = [
+  { key: 'btn_clear_key', label: 'Clear Secret Key Button', sub: 'Lock Tab mein key clear karne ka button' },
+  { key: 'btn_clear_canvas', label: 'Reset / Clear Photo Button', sub: 'Lock Tab mein loaded photo hatane ka button' },
+  { key: 'btn_quick_chat', label: 'Quick Chat Shortcut Button', sub: 'Lock Tab mein seedha Chat kholne ka button' },
+  { key: 'btn_quick_settings', label: 'Quick Settings Button', sub: 'Lock Tab mein Settings kholne ka button' },
+  { key: 'btn_scroll_top', label: 'Scroll To Top Button', sub: 'Main screen par upar scroll karne ka button' },
+  { key: 'btn_copy_codec', label: 'Quick Copy Codec Button', sub: 'Codec Tab mein extra copy shortcut' },
+  { key: 'hud_badge', label: 'Future HUD Corner Badge', sub: 'Screen ke top-right par FUTURE HUD badge' },
+  { key: 'cyber_grid', label: 'Cyber Grid Background Overlay', sub: 'Background par futuristic grid lines' },
+  { key: 'pulse_glow', label: 'Live Neon Pulse Border', sub: 'Cards par halka breathing glow effect' },
+  { key: 'live_clock_pill', label: 'Live Digital Clock Pill', sub: 'Top-left mein live time badge' },
+  { key: 'compact_cards', label: 'Ultra Compact Card Spacing', sub: 'Cards ke beech kam gap (compact look)' },
+  { key: 'hide_meta_pill', label: 'Hide Image Size Pill (0x0)', sub: 'Preview photo ke neeche size tag chhupayein' }
+];
+
 let studioState = JSON.parse(localStorage.getItem(STUDIO_STATE_KEY) || 'null') || {
   activeTheme: "Pure Glass",
   glowPx: 18,
   fontScale: 100,
-  customOptions: [],
+  glassOverride: {
+    cardAlpha: 0.08,
+    glassBlur: 24,
+    borderAlpha: 0.16,
+    bgDim: 0.45,
+    radius: 26
+  },
+  toggles: {
+    btn_clear_key: false,
+    btn_clear_canvas: false,
+    btn_quick_chat: false,
+    btn_quick_settings: false,
+    btn_scroll_top: false,
+    btn_copy_codec: false,
+    hud_badge: false,
+    cyber_grid: false,
+    pulse_glow: false,
+    live_clock_pill: false,
+    compact_cards: false,
+    hide_meta_pill: false
+  },
   bgPhotoUrl: "",
   broadcastBg: true,
   watermarkText: "",
   highlightColor: "#facc15",
   highlightTextColor: "#06070a",
   highlightPhrase: "",
-  highlightEnabled: false,
-  hudBadge: false,
-  cyberGrid: false
+  highlightEnabled: false
 };
+
+if (!studioState.toggles) studioState.toggles = {};
+if (!studioState.glassOverride) {
+  studioState.glassOverride = { cardAlpha: 0.08, glassBlur: 24, borderAlpha: 0.16, bgDim: 0.45, radius: 26 };
+}
 
 const studioStyleEl = document.createElement('style');
 studioStyleEl.id = 'studioDynamicStyle';
@@ -118,12 +157,24 @@ studioHudBadgeEl.style.cssText = 'position:fixed;top:64px;right:16px;z-index:90;
 studioHudBadgeEl.textContent = 'FUTURE HUD';
 document.body.appendChild(studioHudBadgeEl);
 
+const studioClockEl = document.createElement('div');
+studioClockEl.id = 'studioClockPill';
+studioClockEl.style.cssText = 'position:fixed;top:64px;left:16px;z-index:90;display:none;padding:4px 10px;border-radius:999px;font-size:10.5px;font-weight:700;background:rgba(0,0,0,0.65);border:1px solid var(--btn-border);color:var(--btn-text);pointer-events:none;';
+document.body.appendChild(studioClockEl);
+
+setInterval(() => {
+  if (studioClockEl.style.display !== 'none') {
+    const now = new Date();
+    studioClockEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+}, 1000);
+
 const studioCyberGridEl = document.createElement('div');
 studioCyberGridEl.id = 'studioCyberGrid';
 studioCyberGridEl.style.cssText = 'position:fixed;inset:0;z-index:-1;pointer-events:none;display:none;background-image:linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:28px 28px;';
 document.body.appendChild(studioCyberGridEl);
 
-let renderedStudioOptionEls = [];
+let renderedReadymadeEls = [];
 let originalHighlightedNodes = [];
 
 function saveStudioLocal() {
@@ -142,9 +193,12 @@ function renderStudioThemeButtons() {
     chip.onclick = () => {
       studioState.activeTheme = name;
       currentTheme = clone(STUDIO_THEMES[name]);
+      // Keep user's live glass & geometry sliders synced
+      currentTheme.glass = { ...currentTheme.glass, ...studioState.glassOverride };
       applyTheme(currentTheme);
       saveStudioLocal();
       renderStudioThemeButtons();
+      syncStudioInputsFromState();
       applyStudioVisuals();
       showToast(`Theme: ${name}`);
     };
@@ -152,101 +206,121 @@ function renderStudioThemeButtons() {
   });
 }
 
-function clearCustomStudioOptions() {
-  renderedStudioOptionEls.forEach((el) => {
+function renderReadymadeOptionToggles() {
+  const host = document.getElementById('readymadeOptionsToggles');
+  if (!host) return;
+  host.innerHTML = '';
+
+  READYMADE_OPTIONS_CATALOG.forEach((item) => {
+    const isOn = Boolean(studioState.toggles[item.key]);
+    const row = document.createElement('label');
+    row.className = 'color-row';
+    row.style.cursor = 'pointer';
+    row.innerHTML = `
+      <div style="padding-right:10px;">
+        <div style="font-size:13px; font-weight:600;">${item.label}</div>
+        <div style="font-size:10.5px; color:var(--text-secondary);">${item.sub}</div>
+      </div>
+      <input type="checkbox" ${isOn ? 'checked' : ''} style="width:18px; height:18px; accent-color:var(--btn-active-bg);">
+    `;
+    const chk = row.querySelector('input');
+    chk.onchange = () => {
+      studioState.toggles[item.key] = chk.checked;
+      saveStudioLocal();
+      applyReadymadeOptionsToUI();
+      applyStudioVisuals();
+      showToast(`${item.label}: ${chk.checked ? 'ON' : 'OFF'}`);
+    };
+    host.appendChild(row);
+  });
+}
+
+function applyReadymadeOptionsToUI() {
+  renderedReadymadeEls.forEach((el) => {
     if (el && el.parentNode) el.parentNode.removeChild(el);
   });
-  renderedStudioOptionEls = [];
-}
+  renderedReadymadeEls = [];
 
-function runStudioOptionAction(opt) {
-  switch (opt.actionType) {
-    case 'clear_key': {
+  const t = studioState.toggles || {};
+  const lockTab = document.getElementById('tab-lock') || document.body;
+  const codecTab = document.getElementById('tab-number') || document.body;
+
+  const makeBtn = (parent, text, onClickFn) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'btn mb-10';
+    b.style.marginTop = '8px';
+    b.innerHTML = `<span>${text}</span>`;
+    b.onclick = onClickFn;
+    parent.appendChild(b);
+    renderedReadymadeEls.push(b);
+  };
+
+  if (t.btn_clear_key) {
+    makeBtn(lockTab, 'Clear Secret Key', () => {
       const k = document.getElementById('keyInput');
       if (k) k.value = '';
-      showToast(opt.message || 'Key cleared');
-      break;
-    }
-    case 'scroll_top':
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      showToast(opt.message || 'Scrolled to top');
-      break;
-    case 'toggle_highlight':
-      toggleTextHighlighter();
-      break;
-    case 'open_settings':
-      if (typeof openSettings === 'function') openSettings();
-      break;
-    case 'open_chat':
+      showToast('Secret key cleared');
+    });
+  }
+
+  if (t.btn_clear_canvas) {
+    makeBtn(lockTab, 'Reset / Clear Loaded Photo', () => {
+      if (typeof canvas !== 'undefined' && typeof ctx !== 'undefined') {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.style.display = 'none';
+        if (typeof emptyState !== 'undefined') emptyState.style.display = 'flex';
+        if (typeof metaPill !== 'undefined') metaPill.style.display = 'none';
+        if (typeof imgLoaded !== 'undefined') imgLoaded = false;
+      }
+      showToast('Photo cleared');
+    });
+  }
+
+  if (t.btn_quick_chat) {
+    makeBtn(lockTab, 'Open Live Chat', () => {
       if (typeof window.openLiveChatModal === 'function') window.openLiveChatModal();
-      break;
-    default:
-      showToast(opt.message || opt.label);
+    });
+  }
+
+  if (t.btn_quick_settings) {
+    makeBtn(lockTab, 'Open Theme Settings', () => {
+      if (typeof openSettings === 'function') openSettings();
+    });
+  }
+
+  if (t.btn_copy_codec) {
+    makeBtn(codecTab, 'Quick Copy Offline Code', () => {
+      if (typeof copyOfflineCodeBox === 'function') copyOfflineCodeBox();
+    });
+  }
+
+  if (t.btn_scroll_top) {
+    makeBtn(document.body, '↑ Scroll To Top', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
   }
 }
 
-function renderCustomStudioOptions() {
-  clearCustomStudioOptions();
-  const listEl = document.getElementById('studioAddedOptionsList');
-  if (listEl) {
-    if (!studioState.customOptions.length) {
-      listEl.innerHTML = `<div style="font-size:12px;color:var(--text-secondary);text-align:center;padding:12px;">Koi custom option add nahi hai</div>`;
-    } else {
-      listEl.innerHTML = '';
-      studioState.customOptions.forEach((opt) => {
-        const row = document.createElement('div');
-        row.className = 'color-row';
-        row.innerHTML = `
-          <div>
-            <div style="font-size:13px;font-weight:600;">${opt.label.replace(/</g, '&lt;')}</div>
-            <div style="font-size:10.5px;color:var(--text-secondary);">${opt.place} • ${opt.actionType}</div>
-          </div>
-          <button class="btn" type="button" style="width:auto;padding:7px 12px;font-size:11.5px;" onclick="removeStudioOptionItem('${opt.id}')">Remove</button>
-        `;
-        listEl.appendChild(row);
-      });
-    }
-  }
+function onStudioGlassChange() {
+  const alpha = Number(document.getElementById('slStudioAlpha').value) / 100;
+  const blur = Number(document.getElementById('slStudioBlur').value);
+  const border = Number(document.getElementById('slStudioBorder').value) / 100;
+  const dim = Number(document.getElementById('slStudioDim').value) / 100;
+  const radius = Number(document.getElementById('slStudioRadius').value);
 
-  studioState.customOptions.forEach((opt) => {
-    const host = document.querySelector(opt.place) || document.body;
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'btn mb-10 studio-extra-btn';
-    btn.dataset.studioOptId = opt.id;
-    btn.innerHTML = `<span>${opt.label.replace(/</g, '&lt;')}</span>`;
-    btn.onclick = () => runStudioOptionAction(opt);
-    host.appendChild(btn);
-    renderedStudioOptionEls.push(btn);
-  });
-}
+  studioState.glassOverride = {
+    cardAlpha: alpha,
+    glassBlur: blur,
+    borderAlpha: border,
+    bgDim: dim,
+    radius: radius
+  };
 
-function addStudioOptionItem() {
-  const place = document.getElementById('studioOptPlace').value;
-  const label = document.getElementById('studioOptName').value.trim();
-  const actionType = document.getElementById('studioOptActionType').value;
-  const message = document.getElementById('studioOptMsg').value.trim();
-  if (!label) return showToast('Option ka naam likhein');
-
-  studioState.customOptions.push({
-    id: 'opt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-    place,
-    label,
-    actionType,
-    message
-  });
-  document.getElementById('studioOptName').value = '';
-  document.getElementById('studioOptMsg').value = '';
+  currentTheme.glass = { ...studioState.glassOverride };
+  applyTheme(currentTheme);
+  syncStudioInputsFromState();
   saveStudioLocal();
-  renderCustomStudioOptions();
-  showToast(`"${label}" add ho gaya`);
-}
-
-function removeStudioOptionItem(id) {
-  studioState.customOptions = studioState.customOptions.filter((o) => o.id !== id);
-  saveStudioLocal();
-  renderCustomStudioOptions();
-  showToast('Option remove ho gaya');
 }
 
 function clearTextHighlighter() {
@@ -331,8 +405,6 @@ function applyStudioVisuals() {
   const hcEl = document.getElementById('studioHighlightColor');
   const htcEl = document.getElementById('studioHighlightTextColor');
   const hpEl = document.getElementById('studioHighlightPhrase');
-  const hudEl = document.getElementById('studioHudBadgeToggle');
-  const gridEl = document.getElementById('studioCyberGridToggle');
 
   if (glowEl) studioState.glowPx = Number(glowEl.value);
   if (fontEl) studioState.fontScale = Number(fontEl.value);
@@ -341,20 +413,23 @@ function applyStudioVisuals() {
   if (hcEl) studioState.highlightColor = hcEl.value;
   if (htcEl) studioState.highlightTextColor = htcEl.value;
   if (hpEl) studioState.highlightPhrase = hpEl.value;
-  if (hudEl) studioState.hudBadge = Boolean(hudEl.checked);
-  if (gridEl) studioState.cyberGrid = Boolean(gridEl.checked);
 
   const gVal = document.getElementById('valStudioGlow');
   const fVal = document.getElementById('valStudioFont');
   if (gVal) gVal.textContent = studioState.glowPx + 'px';
   if (fVal) fVal.textContent = studioState.fontScale + '%';
 
-  studioStyleEl.textContent = `
+  const t = studioState.toggles || {};
+  const extraCss = `
     body { font-size: ${studioState.fontScale}% !important; }
     .panel-card, .stage-card, .btn {
       box-shadow: 0 0 ${studioState.glowPx}px color-mix(in srgb, var(--btn-border) 45%, transparent) !important;
     }
+    ${t.pulse_glow ? `@keyframes psPulseGlow { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.12); } } .panel-card, .stage-card { animation: psPulseGlow 3.2s infinite ease-in-out; }` : ''}
+    ${t.compact_cards ? `.stage-card { margin-bottom: 8px !important; padding: 8px !important; } .panel-card { padding: 12px !important; }` : ''}
+    ${t.hide_meta_pill ? `#metaPill { display: none !important; }` : ''}
   `;
+  studioStyleEl.textContent = extraCss;
 
   if (studioState.bgPhotoUrl) {
     wallpaperLayer.style.backgroundImage = `url(${studioState.bgPhotoUrl})`;
@@ -367,8 +442,12 @@ function applyStudioVisuals() {
     studioWatermarkEl.style.display = 'none';
   }
 
-  studioHudBadgeEl.style.display = studioState.hudBadge ? 'block' : 'none';
-  studioCyberGridEl.style.display = studioState.cyberGrid ? 'block' : 'none';
+  studioHudBadgeEl.style.display = t.hud_badge ? 'block' : 'none';
+  studioCyberGridEl.style.display = t.cyber_grid ? 'block' : 'none';
+  studioClockEl.style.display = t.live_clock_pill ? 'block' : 'none';
+  if (t.live_clock_pill) {
+    studioClockEl.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
 
   applyTextHighlightInDOM(
     studioState.highlightPhrase,
@@ -418,16 +497,15 @@ function resetStudioExtras() {
     activeTheme: "Pure Glass",
     glowPx: 18,
     fontScale: 100,
-    customOptions: [],
+    glassOverride: { cardAlpha: 0.08, glassBlur: 24, borderAlpha: 0.16, bgDim: 0.45, radius: 26 },
+    toggles: {},
     bgPhotoUrl: "",
     broadcastBg: true,
     watermarkText: "",
     highlightColor: "#facc15",
     highlightTextColor: "#06070a",
     highlightPhrase: "",
-    highlightEnabled: false,
-    hudBadge: false,
-    cyberGrid: false
+    highlightEnabled: false
   };
   currentTheme = clone(BASE_THEME);
   applyTheme(currentTheme);
@@ -435,14 +513,29 @@ function resetStudioExtras() {
   saveStudioLocal();
   syncStudioInputsFromState();
   renderStudioThemeButtons();
-  renderCustomStudioOptions();
+  renderReadymadeOptionToggles();
+  applyReadymadeOptionsToUI();
   applyStudioVisuals();
   showToast('Saare extras reset ho gaye');
 }
 
 function syncStudioInputsFromState() {
   const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
   const setChk = (id, chk) => { const el = document.getElementById(id); if (el) el.checked = Boolean(chk); };
+
+  const g = studioState.glassOverride || currentTheme.glass;
+  setVal('slStudioAlpha', Math.round((g.cardAlpha ?? 0.08) * 100));
+  setTxt('valStudioAlpha', Math.round((g.cardAlpha ?? 0.08) * 100) + '%');
+  setVal('slStudioBlur', g.glassBlur ?? 24);
+  setTxt('valStudioBlur', (g.glassBlur ?? 24) + 'px');
+  setVal('slStudioBorder', Math.round((g.borderAlpha ?? 0.16) * 100));
+  setTxt('valStudioBorder', Math.round((g.borderAlpha ?? 0.16) * 100) + '%');
+  setVal('slStudioDim', Math.round((g.bgDim ?? 0.45) * 100));
+  setTxt('valStudioDim', Math.round((g.bgDim ?? 0.45) * 100) + '%');
+  setVal('slStudioRadius', g.radius ?? 26);
+  setTxt('valStudioRadius', (g.radius ?? 26) + 'px');
+
   setVal('slStudioGlow', studioState.glowPx);
   setVal('slStudioFont', studioState.fontScale);
   setVal('studioBgWatermarkText', studioState.watermarkText || '');
@@ -450,13 +543,11 @@ function syncStudioInputsFromState() {
   setVal('studioHighlightColor', studioState.highlightColor || '#facc15');
   setVal('studioHighlightTextColor', studioState.highlightTextColor || '#06070a');
   setVal('studioHighlightPhrase', studioState.highlightPhrase || '');
-  setChk('studioHudBadgeToggle', studioState.hudBadge);
-  setChk('studioCyberGridToggle', studioState.cyberGrid);
 }
 
 async function saveAndPublishStudio(closeAfter) {
+  applyReadymadeOptionsToUI();
   applyStudioVisuals();
-  renderCustomStudioOptions();
   if (currentUser) {
     try {
       await db.ref('live_update').set({
@@ -464,25 +555,24 @@ async function saveAndPublishStudio(closeAfter) {
           activeTheme: studioState.activeTheme,
           glowPx: studioState.glowPx,
           fontScale: studioState.fontScale,
-          customOptions: studioState.customOptions,
+          glassOverride: studioState.glassOverride,
+          toggles: studioState.toggles,
           bgPhotoUrl: studioState.broadcastBg ? studioState.bgPhotoUrl : '',
           broadcastBg: studioState.broadcastBg,
           watermarkText: studioState.watermarkText,
           highlightColor: studioState.highlightColor,
           highlightTextColor: studioState.highlightTextColor,
           highlightPhrase: studioState.highlightPhrase,
-          highlightEnabled: studioState.highlightEnabled,
-          hudBadge: studioState.hudBadge,
-          cyberGrid: studioState.cyberGrid
+          highlightEnabled: studioState.highlightEnabled
         },
         updatedAt: Date.now()
       });
-      showToast('Sab users ke liye publish ho gaya!');
+      showToast('Sab users ke liye har jagah publish ho gaya!');
     } catch (e) {
       showToast('Local mein save ho gaya (Cloud rule check karein)');
     }
   } else {
-    showToast('Local mein apply ho gaya!');
+    showToast('Local mein apply ho gaya! (Sign in karke push karein)');
   }
   if (closeAfter) closeSecret();
 }
@@ -495,16 +585,22 @@ db.ref('live_update').on('value', (snap) => {
     studioState = {
       ...studioState,
       ...remote,
+      glassOverride: remote.glassOverride || studioState.glassOverride,
+      toggles: { ...studioState.toggles, ...(remote.toggles || {}) },
       bgPhotoUrl: remote.broadcastBg === false ? studioState.bgPhotoUrl : (remote.bgPhotoUrl || '')
     };
     if (studioState.activeTheme && STUDIO_THEMES[studioState.activeTheme]) {
       currentTheme = clone(STUDIO_THEMES[studioState.activeTheme]);
-      applyTheme(currentTheme);
     }
+    if (studioState.glassOverride) {
+      currentTheme.glass = { ...currentTheme.glass, ...studioState.glassOverride };
+    }
+    applyTheme(currentTheme);
     saveStudioLocal();
     syncStudioInputsFromState();
     renderStudioThemeButtons();
-    renderCustomStudioOptions();
+    renderReadymadeOptionToggles();
+    applyReadymadeOptionsToUI();
     applyStudioVisuals();
   }
 });
@@ -555,7 +651,7 @@ function showSecretModal() {
     currentUser ? `Signed in: ${currentUser.email}` : 'Local Mode (Sign in to push to all users)';
   syncStudioInputsFromState();
   renderStudioThemeButtons();
-  renderCustomStudioOptions();
+  renderReadymadeOptionToggles();
   document.getElementById("secretOverlay").classList.add("open");
 }
 
@@ -836,8 +932,9 @@ async function receiveShareFile() {
   }
 }
 
-// Initial boot of saved no-code studio state
+// Initial boot
 syncStudioInputsFromState();
 renderStudioThemeButtons();
-renderCustomStudioOptions();
+renderReadymadeOptionToggles();
+applyReadymadeOptionsToUI();
 applyStudioVisuals();
