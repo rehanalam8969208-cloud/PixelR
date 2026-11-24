@@ -1,4 +1,4 @@
-// --- FIREBASE AUTH, 5-MIN AUTO-DELETE SHARE & EASY SECRET LIVE STUDIO ---
+// --- FIREBASE AUTH, 5-MIN AUTO-DELETE SHARE & NO-CODE FUTURISTIC SECRET STUDIO ---
 const firebaseConfig = {
   apiKey: "AIzaSyCe9PY5mGrSOlzLOKByFrii_7_Vjlvv0AM",
   authDomain: "pixel-8e2df.firebaseapp.com",
@@ -26,63 +26,486 @@ function getSecretPass() {
   return localStorage.getItem("ps_secret_pass") || DEFAULT_SECRET_PASS;
 }
 
-// --- 1. LIVE REMOTE CODE ENGINE (HTML + CSS + JS) ---
-const liveStyleEl = document.createElement('style');
-liveStyleEl.id = 'liveRemoteStyle';
-document.head.appendChild(liveStyleEl);
+// --- 1. NO-CODE FUTURISTIC SECRET STUDIO ENGINE ---
+const STUDIO_STATE_KEY = 'ps_nocode_studio_v1';
 
-const liveHtmlHost = document.createElement('div');
-liveHtmlHost.id = 'liveRemoteHtmlHost';
-liveHtmlHost.style.display = 'none';
-document.body.appendChild(liveHtmlHost);
+const STUDIO_THEMES = {
+  "Neon Cyber": {
+    colors: { bgBase: "#050816", cardColor: "#0ea5e9", borderColor: "#22d3ee", textPrimary: "#f0f9ff", textSecondary: "#7dd3fc" },
+    buttons: { btnBg: "rgba(14,165,233,0.12)", btnBorder: "#22d3ee", btnText: "#67e8f9", btnActiveBg: "#22d3ee", btnActiveText: "#050816" },
+    glass: { cardAlpha: 0.14, glassBlur: 26, borderAlpha: 0.35, bgDim: 0.45, radius: 24 },
+    dock: { dockBg: "rgba(5,8,22,0.82)", dockPillBg: "#22d3ee", dockPillText: "#050816", toastBg: "rgba(8,15,35,0.92)", toastDot: "#22d3ee" }
+  },
+  "Aurora Glass": {
+    colors: { bgBase: "#09071a", cardColor: "#a855f7", borderColor: "#34d399", textPrimary: "#faf5ff", textSecondary: "#c4b5fd" },
+    buttons: { btnBg: "rgba(168,85,247,0.12)", btnBorder: "#c084fc", btnText: "#f3e8ff", btnActiveBg: "#34d399", btnActiveText: "#052e16" },
+    glass: { cardAlpha: 0.16, glassBlur: 30, borderAlpha: 0.32, bgDim: 0.4, radius: 28 },
+    dock: { dockBg: "rgba(12,9,28,0.8)", dockPillBg: "#c084fc", dockPillText: "#09071a", toastBg: "rgba(18,12,42,0.92)", toastDot: "#34d399" }
+  },
+  "Royal Gold": {
+    colors: { bgBase: "#0c0904", cardColor: "#f59e0b", borderColor: "#fbbf24", textPrimary: "#fffbeb", textSecondary: "#fcd34d" },
+    buttons: { btnBg: "rgba(245,158,11,0.1)", btnBorder: "#fbbf24", btnText: "#fde68a", btnActiveBg: "#fbbf24", btnActiveText: "#1c1202" },
+    glass: { cardAlpha: 0.12, glassBlur: 24, borderAlpha: 0.3, bgDim: 0.48, radius: 22 },
+    dock: { dockBg: "rgba(16,12,5,0.84)", dockPillBg: "#fbbf24", dockPillText: "#1c1202", toastBg: "rgba(22,16,6,0.94)", toastDot: "#fbbf24" }
+  },
+  "Rose Quartz": {
+    colors: { bgBase: "#14060d", cardColor: "#f43f5e", borderColor: "#fb7185", textPrimary: "#fff1f2", textSecondary: "#fda4af" },
+    buttons: { btnBg: "rgba(244,63,94,0.12)", btnBorder: "#fb7185", btnText: "#ffe4e6", btnActiveBg: "#fb7185", btnActiveText: "#1f050c" },
+    glass: { cardAlpha: 0.14, glassBlur: 26, borderAlpha: 0.3, bgDim: 0.45, radius: 28 },
+    dock: { dockBg: "rgba(22,7,14,0.82)", dockPillBg: "#fb7185", dockPillText: "#1f050c", toastBg: "rgba(28,8,18,0.92)", toastDot: "#fb7185" }
+  },
+  "Emerald Matrix": {
+    colors: { bgBase: "#030d08", cardColor: "#10b981", borderColor: "#34d399", textPrimary: "#ecfdf5", textSecondary: "#6ee7b7" },
+    buttons: { btnBg: "rgba(16,185,129,0.12)", btnBorder: "#34d399", btnText: "#a7f3d0", btnActiveBg: "#34d399", btnActiveText: "#022c22" },
+    glass: { cardAlpha: 0.13, glassBlur: 22, borderAlpha: 0.32, bgDim: 0.5, radius: 18 },
+    dock: { dockBg: "rgba(4,16,10,0.85)", dockPillBg: "#34d399", dockPillText: "#022c22", toastBg: "rgba(5,20,13,0.94)", toastDot: "#34d399" }
+  },
+  "Arctic Frost": {
+    colors: { bgBase: "#07131f", cardColor: "#38bdf8", borderColor: "#bae6fd", textPrimary: "#f0f9ff", textSecondary: "#7dd3fc" },
+    buttons: { btnBg: "rgba(186,230,253,0.12)", btnBorder: "#7dd3fc", btnText: "#e0f2fe", btnActiveBg: "#e0f2fe", btnActiveText: "#07131f" },
+    glass: { cardAlpha: 0.18, glassBlur: 34, borderAlpha: 0.34, bgDim: 0.35, radius: 30 },
+    dock: { dockBg: "rgba(8,20,33,0.78)", dockPillBg: "#7dd3fc", dockPillText: "#07131f", toastBg: "rgba(9,24,40,0.92)", toastDot: "#7dd3fc" }
+  },
+  "Sunset Ember": {
+    colors: { bgBase: "#140704", cardColor: "#f97316", borderColor: "#fb923c", textPrimary: "#fff7ed", textSecondary: "#fdba74" },
+    buttons: { btnBg: "rgba(249,115,22,0.12)", btnBorder: "#fb923c", btnText: "#ffedd5", btnActiveBg: "#fb923c", btnActiveText: "#1c0802" },
+    glass: { cardAlpha: 0.14, glassBlur: 24, borderAlpha: 0.3, bgDim: 0.45, radius: 24 },
+    dock: { dockBg: "rgba(22,9,5,0.82)", dockPillBg: "#fb923c", dockPillText: "#1c0802", toastBg: "rgba(28,11,6,0.92)", toastDot: "#fb923c" }
+  },
+  "Cosmic Violet": {
+    colors: { bgBase: "#0b0518", cardColor: "#8b5cf6", borderColor: "#a78bfa", textPrimary: "#f5f3ff", textSecondary: "#c4b5fd" },
+    buttons: { btnBg: "rgba(139,92,246,0.14)", btnBorder: "#a78bfa", btnText: "#ede9fe", btnActiveBg: "#a78bfa", btnActiveText: "#0b0518" },
+    glass: { cardAlpha: 0.15, glassBlur: 28, borderAlpha: 0.28, bgDim: 0.44, radius: 26 },
+    dock: { dockBg: "rgba(14,7,28,0.82)", dockPillBg: "#a78bfa", dockPillText: "#0b0518", toastBg: "rgba(18,9,36,0.92)", toastDot: "#a78bfa" }
+  },
+  "AMOLED Stealth": {
+    colors: { bgBase: "#000000", cardColor: "#ffffff", borderColor: "#52525b", textPrimary: "#ffffff", textSecondary: "#a1a1aa" },
+    buttons: { btnBg: "transparent", btnBorder: "#3f3f46", btnText: "#e4e4e7", btnActiveBg: "#ffffff", btnActiveText: "#000000" },
+    glass: { cardAlpha: 0.06, glassBlur: 20, borderAlpha: 0.2, bgDim: 0.65, radius: 20 },
+    dock: { dockBg: "rgba(0,0,0,0.9)", dockPillBg: "#ffffff", dockPillText: "#000000", toastBg: "rgba(10,10,10,0.95)", toastDot: "#ffffff" }
+  },
+  "Pure Glass": clone(BASE_THEME)
+};
 
-let lastAppliedJsHash = '';
-let injectedOptionNodes = [];
+let studioState = JSON.parse(localStorage.getItem(STUDIO_STATE_KEY) || 'null') || {
+  activeTheme: "Pure Glass",
+  glowPx: 18,
+  fontScale: 100,
+  customOptions: [],
+  bgPhotoUrl: "",
+  broadcastBg: true,
+  watermarkText: "",
+  highlightColor: "#facc15",
+  highlightTextColor: "#06070a",
+  highlightPhrase: "",
+  highlightEnabled: false,
+  hudBadge: false,
+  cyberGrid: false
+};
 
-function clearInjectedLiveNodes() {
-  injectedOptionNodes.forEach(el => {
-    if (el && el.parentNode) el.parentNode.removeChild(el);
-  });
-  injectedOptionNodes = [];
-  liveHtmlHost.innerHTML = '';
+const studioStyleEl = document.createElement('style');
+studioStyleEl.id = 'studioDynamicStyle';
+document.head.appendChild(studioStyleEl);
+
+const studioWatermarkEl = document.createElement('div');
+studioWatermarkEl.id = 'studioBgWatermark';
+studioWatermarkEl.style.cssText = 'position:fixed;inset:0;z-index:-1;pointer-events:none;display:none;align-items:center;justify-content:center;font-size:30px;font-weight:800;letter-spacing:3px;color:rgba(255,255,255,0.14);text-transform:uppercase;user-select:none;text-align:center;padding:16px;';
+document.body.appendChild(studioWatermarkEl);
+
+const studioHudBadgeEl = document.createElement('div');
+studioHudBadgeEl.id = 'studioHudBadge';
+studioHudBadgeEl.style.cssText = 'position:fixed;top:64px;right:16px;z-index:90;display:none;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:1px;background:rgba(0,0,0,0.65);border:1px solid var(--btn-border);color:var(--btn-text);pointer-events:none;';
+studioHudBadgeEl.textContent = 'FUTURE HUD';
+document.body.appendChild(studioHudBadgeEl);
+
+const studioCyberGridEl = document.createElement('div');
+studioCyberGridEl.id = 'studioCyberGrid';
+studioCyberGridEl.style.cssText = 'position:fixed;inset:0;z-index:-1;pointer-events:none;display:none;background-image:linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:28px 28px;';
+document.body.appendChild(studioCyberGridEl);
+
+let renderedStudioOptionEls = [];
+let originalHighlightedNodes = [];
+
+function saveStudioLocal() {
+  localStorage.setItem(STUDIO_STATE_KEY, JSON.stringify(studioState));
 }
 
-function mountHtmlIntoTarget(htmlString, targetSelector) {
-  if (!htmlString || !htmlString.trim()) return;
-  const temp = document.createElement('div');
-  temp.innerHTML = htmlString.trim();
-  const target = (targetSelector && document.querySelector(targetSelector)) || document.body;
-
-  Array.from(temp.children).forEach(child => {
-    target.appendChild(child);
-    injectedOptionNodes.push(child);
+function renderStudioThemeButtons() {
+  const grid = document.getElementById('studioThemesGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  Object.keys(STUDIO_THEMES).forEach((name) => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'folder-chip' + (studioState.activeTheme === name ? ' selected' : '');
+    chip.innerHTML = `<span>${name}</span><span>✦</span>`;
+    chip.onclick = () => {
+      studioState.activeTheme = name;
+      currentTheme = clone(STUDIO_THEMES[name]);
+      applyTheme(currentTheme);
+      saveStudioLocal();
+      renderStudioThemeButtons();
+      applyStudioVisuals();
+      showToast(`Theme: ${name}`);
+    };
+    grid.appendChild(chip);
   });
+}
+
+function clearCustomStudioOptions() {
+  renderedStudioOptionEls.forEach((el) => {
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+  });
+  renderedStudioOptionEls = [];
+}
+
+function runStudioOptionAction(opt) {
+  switch (opt.actionType) {
+    case 'clear_key': {
+      const k = document.getElementById('keyInput');
+      if (k) k.value = '';
+      showToast(opt.message || 'Key cleared');
+      break;
+    }
+    case 'scroll_top':
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      showToast(opt.message || 'Scrolled to top');
+      break;
+    case 'toggle_highlight':
+      toggleTextHighlighter();
+      break;
+    case 'open_settings':
+      if (typeof openSettings === 'function') openSettings();
+      break;
+    case 'open_chat':
+      if (typeof window.openLiveChatModal === 'function') window.openLiveChatModal();
+      break;
+    default:
+      showToast(opt.message || opt.label);
+  }
+}
+
+function renderCustomStudioOptions() {
+  clearCustomStudioOptions();
+  const listEl = document.getElementById('studioAddedOptionsList');
+  if (listEl) {
+    if (!studioState.customOptions.length) {
+      listEl.innerHTML = `<div style="font-size:12px;color:var(--text-secondary);text-align:center;padding:12px;">Koi custom option add nahi hai</div>`;
+    } else {
+      listEl.innerHTML = '';
+      studioState.customOptions.forEach((opt) => {
+        const row = document.createElement('div');
+        row.className = 'color-row';
+        row.innerHTML = `
+          <div>
+            <div style="font-size:13px;font-weight:600;">${opt.label.replace(/</g, '&lt;')}</div>
+            <div style="font-size:10.5px;color:var(--text-secondary);">${opt.place} • ${opt.actionType}</div>
+          </div>
+          <button class="btn" type="button" style="width:auto;padding:7px 12px;font-size:11.5px;" onclick="removeStudioOptionItem('${opt.id}')">Remove</button>
+        `;
+        listEl.appendChild(row);
+      });
+    }
+  }
+
+  studioState.customOptions.forEach((opt) => {
+    const host = document.querySelector(opt.place) || document.body;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn mb-10 studio-extra-btn';
+    btn.dataset.studioOptId = opt.id;
+    btn.innerHTML = `<span>${opt.label.replace(/</g, '&lt;')}</span>`;
+    btn.onclick = () => runStudioOptionAction(opt);
+    host.appendChild(btn);
+    renderedStudioOptionEls.push(btn);
+  });
+}
+
+function addStudioOptionItem() {
+  const place = document.getElementById('studioOptPlace').value;
+  const label = document.getElementById('studioOptName').value.trim();
+  const actionType = document.getElementById('studioOptActionType').value;
+  const message = document.getElementById('studioOptMsg').value.trim();
+  if (!label) return showToast('Option ka naam likhein');
+
+  studioState.customOptions.push({
+    id: 'opt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+    place,
+    label,
+    actionType,
+    message
+  });
+  document.getElementById('studioOptName').value = '';
+  document.getElementById('studioOptMsg').value = '';
+  saveStudioLocal();
+  renderCustomStudioOptions();
+  showToast(`"${label}" add ho gaya`);
+}
+
+function removeStudioOptionItem(id) {
+  studioState.customOptions = studioState.customOptions.filter((o) => o.id !== id);
+  saveStudioLocal();
+  renderCustomStudioOptions();
+  showToast('Option remove ho gaya');
+}
+
+function clearTextHighlighter() {
+  studioState.highlightEnabled = false;
+  studioState.highlightPhrase = '';
+  const inp = document.getElementById('studioHighlightPhrase');
+  if (inp) inp.value = '';
+  saveStudioLocal();
+  applyStudioVisuals();
+  showToast('Highlighter clear ho gaya');
+}
+
+function toggleTextHighlighter() {
+  studioState.highlightEnabled = !studioState.highlightEnabled;
+  saveStudioLocal();
+  applyStudioVisuals();
+  showToast(studioState.highlightEnabled ? 'Highlighter ON' : 'Highlighter OFF');
+}
+
+function applyTextHighlightInDOM(phrase, bgColor, textColor, enabled) {
+  originalHighlightedNodes.forEach(({ span, parent }) => {
+    if (span && parent && span.parentNode === parent) {
+      parent.replaceChild(document.createTextNode(span.textContent), span);
+      parent.normalize();
+    }
+  });
+  originalHighlightedNodes = [];
+
+  if (!enabled || !phrase || phrase.trim().length < 2) return;
+  const targetWord = phrase.trim().toLowerCase();
+  const skipIds = new Set(['secretOverlay', 'customPassModal', 'liveChatOverlay', 'pixel3DGuideOverlay']);
+
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+      const p = node.parentElement;
+      if (!p) return NodeFilter.FILTER_REJECT;
+      if (['SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT', 'SELECT', 'MARK'].includes(p.tagName)) {
+        return NodeFilter.FILTER_REJECT;
+      }
+      for (const id of skipIds) {
+        if (p.closest('#' + id)) return NodeFilter.FILTER_REJECT;
+      }
+      return node.nodeValue.toLowerCase().includes(targetWord)
+        ? NodeFilter.FILTER_ACCEPT
+        : NodeFilter.FILTER_SKIP;
+    }
+  });
+
+  const matches = [];
+  while (walker.nextNode()) matches.push(walker.currentNode);
+
+  matches.forEach((textNode) => {
+    const raw = textNode.nodeValue;
+    const idx = raw.toLowerCase().indexOf(targetWord);
+    if (idx === -1 || !textNode.parentNode) return;
+
+    const before = raw.slice(0, idx);
+    const matched = raw.slice(idx, idx + targetWord.length);
+    const after = raw.slice(idx + targetWord.length);
+
+    const mark = document.createElement('mark');
+    mark.textContent = matched;
+    mark.style.cssText = `background:${bgColor};color:${textColor};padding:1px 5px;border-radius:6px;font-weight:700;`;
+
+    const parent = textNode.parentNode;
+    const frag = document.createDocumentFragment();
+    if (before) frag.appendChild(document.createTextNode(before));
+    frag.appendChild(mark);
+    if (after) frag.appendChild(document.createTextNode(after));
+
+    parent.replaceChild(frag, textNode);
+    originalHighlightedNodes.push({ span: mark, parent });
+  });
+}
+
+function applyStudioVisuals() {
+  const glowEl = document.getElementById('slStudioGlow');
+  const fontEl = document.getElementById('slStudioFont');
+  const wmEl = document.getElementById('studioBgWatermarkText');
+  const bcEl = document.getElementById('studioBroadcastBgToggle');
+  const hcEl = document.getElementById('studioHighlightColor');
+  const htcEl = document.getElementById('studioHighlightTextColor');
+  const hpEl = document.getElementById('studioHighlightPhrase');
+  const hudEl = document.getElementById('studioHudBadgeToggle');
+  const gridEl = document.getElementById('studioCyberGridToggle');
+
+  if (glowEl) studioState.glowPx = Number(glowEl.value);
+  if (fontEl) studioState.fontScale = Number(fontEl.value);
+  if (wmEl) studioState.watermarkText = wmEl.value;
+  if (bcEl) studioState.broadcastBg = Boolean(bcEl.checked);
+  if (hcEl) studioState.highlightColor = hcEl.value;
+  if (htcEl) studioState.highlightTextColor = htcEl.value;
+  if (hpEl) studioState.highlightPhrase = hpEl.value;
+  if (hudEl) studioState.hudBadge = Boolean(hudEl.checked);
+  if (gridEl) studioState.cyberGrid = Boolean(gridEl.checked);
+
+  const gVal = document.getElementById('valStudioGlow');
+  const fVal = document.getElementById('valStudioFont');
+  if (gVal) gVal.textContent = studioState.glowPx + 'px';
+  if (fVal) fVal.textContent = studioState.fontScale + '%';
+
+  studioStyleEl.textContent = `
+    body { font-size: ${studioState.fontScale}% !important; }
+    .panel-card, .stage-card, .btn {
+      box-shadow: 0 0 ${studioState.glowPx}px color-mix(in srgb, var(--btn-border) 45%, transparent) !important;
+    }
+  `;
+
+  if (studioState.bgPhotoUrl) {
+    wallpaperLayer.style.backgroundImage = `url(${studioState.bgPhotoUrl})`;
+  }
+
+  if (studioState.watermarkText && studioState.watermarkText.trim()) {
+    studioWatermarkEl.textContent = studioState.watermarkText.trim();
+    studioWatermarkEl.style.display = 'flex';
+  } else {
+    studioWatermarkEl.style.display = 'none';
+  }
+
+  studioHudBadgeEl.style.display = studioState.hudBadge ? 'block' : 'none';
+  studioCyberGridEl.style.display = studioState.cyberGrid ? 'block' : 'none';
+
+  applyTextHighlightInDOM(
+    studioState.highlightPhrase,
+    studioState.highlightColor,
+    studioState.highlightTextColor,
+    studioState.highlightEnabled
+  );
+  saveStudioLocal();
+}
+
+function handleStudioBgPhoto(event) {
+  const file = event.target.files && event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+
+  const img = new Image();
+  img.onload = () => {
+    const maxDim = 900;
+    let w = img.width;
+    let h = img.height;
+    if (w > maxDim || h > maxDim) {
+      const ratio = Math.min(maxDim / w, maxDim / h);
+      w = Math.round(w * ratio);
+      h = Math.round(h * ratio);
+    }
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    c.getContext('2d').drawImage(img, 0, 0, w, h);
+    studioState.bgPhotoUrl = c.toDataURL('image/jpeg', 0.72);
+    wallpaperLayer.style.backgroundImage = `url(${studioState.bgPhotoUrl})`;
+    saveStudioLocal();
+    showToast('Background photo set! Sabke liye bhejne ke liye Push dabayein');
+  };
+  img.src = URL.createObjectURL(file);
+}
+
+function clearStudioBgPhoto() {
+  studioState.bgPhotoUrl = '';
+  wallpaperLayer.style.backgroundImage = '';
+  saveStudioLocal();
+  showToast('Background photo hata diya gaya');
+}
+
+function resetStudioExtras() {
+  studioState = {
+    activeTheme: "Pure Glass",
+    glowPx: 18,
+    fontScale: 100,
+    customOptions: [],
+    bgPhotoUrl: "",
+    broadcastBg: true,
+    watermarkText: "",
+    highlightColor: "#facc15",
+    highlightTextColor: "#06070a",
+    highlightPhrase: "",
+    highlightEnabled: false,
+    hudBadge: false,
+    cyberGrid: false
+  };
+  currentTheme = clone(BASE_THEME);
+  applyTheme(currentTheme);
+  wallpaperLayer.style.backgroundImage = '';
+  saveStudioLocal();
+  syncStudioInputsFromState();
+  renderStudioThemeButtons();
+  renderCustomStudioOptions();
+  applyStudioVisuals();
+  showToast('Saare extras reset ho gaye');
+}
+
+function syncStudioInputsFromState() {
+  const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  const setChk = (id, chk) => { const el = document.getElementById(id); if (el) el.checked = Boolean(chk); };
+  setVal('slStudioGlow', studioState.glowPx);
+  setVal('slStudioFont', studioState.fontScale);
+  setVal('studioBgWatermarkText', studioState.watermarkText || '');
+  setChk('studioBroadcastBgToggle', studioState.broadcastBg);
+  setVal('studioHighlightColor', studioState.highlightColor || '#facc15');
+  setVal('studioHighlightTextColor', studioState.highlightTextColor || '#06070a');
+  setVal('studioHighlightPhrase', studioState.highlightPhrase || '');
+  setChk('studioHudBadgeToggle', studioState.hudBadge);
+  setChk('studioCyberGridToggle', studioState.cyberGrid);
+}
+
+async function saveAndPublishStudio(closeAfter) {
+  applyStudioVisuals();
+  renderCustomStudioOptions();
+  if (currentUser) {
+    try {
+      await db.ref('live_update').set({
+        studioState: {
+          activeTheme: studioState.activeTheme,
+          glowPx: studioState.glowPx,
+          fontScale: studioState.fontScale,
+          customOptions: studioState.customOptions,
+          bgPhotoUrl: studioState.broadcastBg ? studioState.bgPhotoUrl : '',
+          broadcastBg: studioState.broadcastBg,
+          watermarkText: studioState.watermarkText,
+          highlightColor: studioState.highlightColor,
+          highlightTextColor: studioState.highlightTextColor,
+          highlightPhrase: studioState.highlightPhrase,
+          highlightEnabled: studioState.highlightEnabled,
+          hudBadge: studioState.hudBadge,
+          cyberGrid: studioState.cyberGrid
+        },
+        updatedAt: Date.now()
+      });
+      showToast('Sab users ke liye publish ho gaya!');
+    } catch (e) {
+      showToast('Local mein save ho gaya (Cloud rule check karein)');
+    }
+  } else {
+    showToast('Local mein apply ho gaya!');
+  }
+  if (closeAfter) closeSecret();
 }
 
 db.ref('live_update').on('value', (snap) => {
-  clearInjectedLiveNodes();
-  if (!snap.exists()) {
-    liveStyleEl.textContent = '';
-    document.getElementById('liveCssBox').value = '';
-    document.getElementById('liveHtmlBox').value = '';
-    document.getElementById('liveJsBox').value = '';
-    return;
-  }
+  if (!snap.exists()) return;
   const val = snap.val();
-  if (typeof val.css === 'string') {
-    liveStyleEl.textContent = val.css;
-    document.getElementById('liveCssBox').value = val.css;
-  }
-  if (typeof val.html === 'string') {
-    document.getElementById('liveHtmlBox').value = val.html;
-    mountHtmlIntoTarget(val.html, val.target || 'body');
-  }
-  if (typeof val.js === 'string') {
-    document.getElementById('liveJsBox').value = val.js;
-    if (val.js.trim() && val.js !== lastAppliedJsHash) {
-      lastAppliedJsHash = val.js;
-      try { new Function(val.js)(); } catch (e) { console.error(e); }
+  if (val && val.studioState) {
+    const remote = val.studioState;
+    studioState = {
+      ...studioState,
+      ...remote,
+      bgPhotoUrl: remote.broadcastBg === false ? studioState.bgPhotoUrl : (remote.bgPhotoUrl || '')
+    };
+    if (studioState.activeTheme && STUDIO_THEMES[studioState.activeTheme]) {
+      currentTheme = clone(STUDIO_THEMES[studioState.activeTheme]);
+      applyTheme(currentTheme);
     }
+    saveStudioLocal();
+    syncStudioInputsFromState();
+    renderStudioThemeButtons();
+    renderCustomStudioOptions();
+    applyStudioVisuals();
   }
 });
 
@@ -99,7 +522,7 @@ document.getElementById('secretTrigger').addEventListener('click', () => {
   }
 });
 
-// Custom Dark Password Popup (No White Browser Prompt)
+// Custom Dark Password Popup
 function openSecret() {
   if (secretUnlocked) {
     showSecretModal();
@@ -129,7 +552,10 @@ function verifyPassPopup() {
 function showSecretModal() {
   document.getElementById("newSecretPassInput").value = getSecretPass();
   document.getElementById("adminStatusEmail").textContent =
-    currentUser ? `Signed in: ${currentUser.email}` : 'Sign in with Admin Gmail first';
+    currentUser ? `Signed in: ${currentUser.email}` : 'Local Mode (Sign in to push to all users)';
+  syncStudioInputsFromState();
+  renderStudioThemeButtons();
+  renderCustomStudioOptions();
   document.getElementById("secretOverlay").classList.add("open");
 }
 
@@ -139,7 +565,7 @@ function closeSecret() {
 }
 
 function switchSecretTab(tab) {
-  ['add', 'style', 'code', 'pass'].forEach(t => {
+  ['themes', 'options', 'bg', 'pass'].forEach((t) => {
     document.getElementById('sbtn-' + t).classList.toggle('active', t === tab);
     document.getElementById('stab-' + t).classList.toggle('active', t === tab);
   });
@@ -150,83 +576,6 @@ function saveSecretPass() {
   if (!val || val.length < 3) return showToast("Password min 3 chars");
   localStorage.setItem("ps_secret_pass", val);
   showToast("Secret password updated!");
-}
-
-function applyQuickPopupTheme() {
-  const bg = document.getElementById('quickPopupBg').value;
-  const accent = document.getElementById('quickPopupAccent').value;
-  const cssBox = document.getElementById('liveCssBox');
-  const popupRule = `\n#passPopupCard { background: ${bg} !important; border-color: ${accent} !important; }\n#passPopupCard .btn { border-color: ${accent} !important; color: ${accent} !important; }`;
-  cssBox.value = (cssBox.value.replace(/\n?#passPopupCard[\s\S]*?#passPopupCard \.btn[\s\S]*?\}\n?/g, '') + popupRule).trim();
-  liveStyleEl.textContent = cssBox.value;
-}
-
-async function addQuickOptionLive() {
-  if (!currentUser) return showToast('Sign in with Admin account first');
-  const target = document.getElementById('newOptionTarget').value;
-  const label = document.getElementById('newOptionLabel').value.trim();
-  const actionCode = document.getElementById('newOptionAction').value.trim();
-
-  if (!label) return showToast('Enter button / option name');
-
-  const btnId = 'liveOpt_' + Date.now();
-  const btnHtml = `<button class="btn mb-10" id="${btnId}">${label}</button>`;
-  const bindJs = actionCode
-    ? `document.getElementById('${btnId}').onclick = function() { ${actionCode} };`
-    : `document.getElementById('${btnId}').onclick = function() { showToast('${label}'); };`;
-
-  const htmlBox = document.getElementById('liveHtmlBox');
-  const jsBox = document.getElementById('liveJsBox');
-
-  htmlBox.value = (htmlBox.value + '\n' + btnHtml).trim();
-  jsBox.value = (jsBox.value + '\n' + bindJs).trim();
-
-  try {
-    await db.ref('live_update').set({
-      css: document.getElementById('liveCssBox').value,
-      html: htmlBox.value,
-      target: target,
-      js: jsBox.value,
-      updatedAt: Date.now()
-    });
-    lastAppliedJsHash = '';
-    document.getElementById('newOptionLabel').value = '';
-    document.getElementById('newOptionAction').value = '';
-    showToast(`Added "${label}" live!`);
-  } catch (e) {
-    showToast('Access Denied (Admin Only)');
-  }
-}
-
-async function publishLiveCode() {
-  if (!currentUser) return showToast('Sign in with Admin account first');
-  try {
-    const jsVal = document.getElementById('liveJsBox').value;
-    lastAppliedJsHash = '';
-    await db.ref('live_update').set({
-      css: document.getElementById('liveCssBox').value,
-      html: document.getElementById('liveHtmlBox').value,
-      target: document.getElementById('newOptionTarget').value || 'body',
-      js: jsVal,
-      updatedAt: Date.now()
-    });
-    showToast('Published live to all users!');
-    closeSecret();
-  } catch (e) {
-    showToast('Access Denied (Admin Only)');
-  }
-}
-
-async function clearLiveCode() {
-  if (!currentUser) return showToast('Sign in first');
-  try {
-    await db.ref('live_update').remove();
-    lastAppliedJsHash = '';
-    clearInjectedLiveNodes();
-    showToast('Live patch cleared');
-  } catch (e) {
-    showToast('Access Denied');
-  }
 }
 
 // --- 2. AUTO-SWEEP EXPIRED SHARES (> 5 MINS) ---
@@ -486,3 +835,9 @@ async function receiveShareFile() {
     showToast('Download failed');
   }
 }
+
+// Initial boot of saved no-code studio state
+syncStudioInputsFromState();
+renderStudioThemeButtons();
+renderCustomStudioOptions();
+applyStudioVisuals();
