@@ -52,7 +52,6 @@ function base64ToBytes(b64) {
   return out;
 }
 
-// Photo se text code banakar box mein dikhana (100% Offline, Firebase mein kuch nahi jayega)
 function photoToNumbers() {
   if (!imgLoaded) return showToast('Pehle photo select karein');
   setLoading(true);
@@ -93,7 +92,6 @@ function photoToNumbers() {
   }, 'image/jpeg', 0.65);
 }
 
-// Box mein paste kiye gaye code se photo wapas dikhana (100% Offline)
 function decodeCodeFromBox() {
   const box = getCodeBox();
   const raw = (box ? box.value : '').trim();
@@ -152,7 +150,6 @@ function clearOfflineCodeBoxNow() {
   showToast('Box clear ho gaya');
 }
 
-// .txt file decoder bhi offline kaam karega
 const txtInputEl = document.getElementById('txtInput');
 if (txtInputEl) {
   txtInputEl.addEventListener('change', (e) => {
