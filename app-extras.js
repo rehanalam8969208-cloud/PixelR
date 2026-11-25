@@ -2,12 +2,11 @@
   if (window.__pixelGitHubCoreSuiteV5) return;
   window.__pixelGitHubCoreSuiteV5 = true;
 
-  // Remove any old brightness dim overlay from live patch
   const oldDim = document.getElementById('psSavedBrightnessOverlay');
   if (oldDim) oldDim.remove();
 
   // =========================================================
-  // 1. 100% LOCAL APP SETTINGS (NO FIREBASE UPLOAD AT ALL)
+  // 1. 100% LOCAL APP SETTINGS (NO LOGIN REQUIRED)
   // =========================================================
   let settingsLocalTimer = null;
   let applyingLocalSettingsFlag = false;
@@ -19,11 +18,7 @@
     if (typeof auth !== 'undefined' && auth && auth.currentUser && auth.currentUser.uid) {
       return auth.currentUser.uid;
     }
-    try {
-      return localStorage.getItem('ps_last_auth_uid') || null;
-    } catch (e) {
-      return null;
-    }
+    return 'guest';
   }
 
   function getSettingsLocalKey(uid) {
@@ -99,15 +94,15 @@
     const payload = { items: collectCurrentSettingsSnapshot(), updatedAt: Date.now() };
     try {
       localStorage.setItem(getSettingsLocalKey(uid), JSON.stringify(payload));
-      localStorage.setItem(getSettingsLocalKey(null), JSON.stringify(payload));
+      localStorage.setItem(getSettingsLocalKey('guest'), JSON.stringify(payload));
     } catch (e) {}
   }
 
   function applyLocalSettingsInstant() {
     const uid = getActiveUid();
     const raw =
-      (uid ? localStorage.getItem(getSettingsLocalKey(uid)) : null) ||
-      localStorage.getItem(getSettingsLocalKey(null));
+      localStorage.getItem(getSettingsLocalKey(uid)) ||
+      localStorage.getItem(getSettingsLocalKey('guest'));
     if (!raw) return;
     try {
       const parsed = JSON.parse(raw);
@@ -144,20 +139,16 @@
   });
   if (document.body) {
     localSettingsObserver.observe(document.body, { childList: true, subtree: true });
-  } else {
-    document.addEventListener('DOMContentLoaded', () => {
-      if (document.body) localSettingsObserver.observe(document.body, { childList: true, subtree: true });
-    });
   }
 
   // =========================================================
-  // 2. TOP BAR CHAT BUTTON (NO BOTTOM DOCK OVERLAP)
+  // 2. TOP BAR CHAT BUTTON (NO LOGIN REQUIRED)
   // =========================================================
   const strayDockBtn = document.getElementById('btn-tab-chat');
   if (strayDockBtn) strayDockBtn.remove();
 
   function ensureTopChatButton() {
-    const topBar = document.querySelector('.top-bar, .app-header, header') ||
+    const topBar = document.querySelector('.topbar, .top-bar, .app-header, header') ||
                    document.querySelector('.icon-btn')?.parentElement;
     if (topBar && !document.getElementById('btn-header-chat')) {
       const headerChatBtn = document.createElement('button');
@@ -176,7 +167,7 @@
   ensureTopChatButton();
 
   // =========================================================
-  // 3. FULL-SCREEN CHAT + 8MB PHOTO (5-MIN / DOWNLOAD FIREBASE DELETE) + LOCAL AI MEMORY
+  // 3. FULL-SCREEN CHAT + 8MB PHOTO (5-MIN / DOWNLOAD DELETE) + LOCAL AI (NO LOGIN NEEDED)
   // =========================================================
   const oldModal = document.getElementById('liveChatOverlay');
   if (oldModal) oldModal.remove();
@@ -198,7 +189,7 @@
           </button>
           <div style="min-width:0;">
             <div id="fullChatHeaderTitle" style="font-size:16.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Chats</div>
-            <div id="fullChatHeaderSub" style="font-size:11px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Sign in to start</div>
+            <div id="fullChatHeaderSub" style="font-size:11px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">No login required</div>
           </div>
         </div>
 
@@ -226,15 +217,15 @@
       </div>
 
       <div id="usernameSetupBox" style="display:none; padding:24px 18px; margin:auto 16px; border-radius:24px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.14);">
-        <div class="section-label" style="text-align:center;">One-Time Permanent Username</div>
+        <div class="section-label" style="text-align:center;">Set Username (No Login Needed)</div>
         <p style="font-size:13px; color:var(--text-secondary); text-align:center; margin:0 0 14px 0;">
-          Apna username ek baar likhein. Yeh aapke account ke saath hamesha ke liye save ho jayega.
+          Apna ek username likhein taaki aap bina login ke chat kar sakein.
         </p>
         <div class="input-wrap">
-          <input type="text" id="newPermanentUsernameInput" placeholder="e.g. rehan_star" maxlength="20" style="padding-left:14px; padding-right:14px;">
+          <input type="text" id="newPermanentUsernameInput" placeholder="e.g. zeeshan_dev" maxlength="20" style="padding-left:14px; padding-right:14px;">
         </div>
         <button class="btn" onclick="claimPermanentUsername()">
-          <span>Save Username Forever</span>
+          <span>Start Chatting</span>
         </button>
       </div>
 
@@ -266,7 +257,6 @@
         </div>
       </div>
 
-      <!-- VIEW 3: LOCAL AI MODE WITH NAME + CHAT MEMORY (100% LOCAL) -->
       <div id="localAIModeView" style="display:none; flex:1; flex-direction:column; min-height:0;">
         <div style="padding:8px 14px; display:flex; align-items:center; justify-content:space-between; gap:8px; background:rgba(56,189,248,0.07); border-bottom:1px solid rgba(255,255,255,0.09); flex-shrink:0;">
           <div id="aiMemoryStatusLabel" style="font-size:11px; color:#7dd3fc;">
@@ -362,7 +352,7 @@
     const localArr = JSON.parse(localStorage.getItem(getFriendsKey()) || '[]');
     friendsList = Array.isArray(localArr) ? localArr : [];
     const uid = getActiveUid();
-    if (uid && typeof db !== 'undefined') {
+    if (uid && uid !== 'guest' && typeof db !== 'undefined') {
       try {
         const snap = await db.ref('users/' + uid + '/friends').get();
         if (snap.exists() && snap.val()) {
@@ -383,7 +373,7 @@
       localStorage.setItem(getFriendsKey(), JSON.stringify(friendsList));
     }
     const uid = getActiveUid();
-    if (uid && typeof db !== 'undefined') {
+    if (uid && uid !== 'guest' && typeof db !== 'undefined') {
       try { await db.ref('users/' + uid + '/friends/' + clean).set(true); } catch (e) {}
     }
     renderFriendsList();
@@ -407,8 +397,7 @@
   }
 
   window.openAddFriendPopup = function() {
-    if (!getActiveUid()) return showToast('Sign in first');
-    if (!myPermanentUsername) return showToast('Set your permanent username first');
+    if (!myPermanentUsername) return showToast('Pehle apna username set karein');
     const sheet = document.getElementById('addFriendSheet');
     sheet.style.display = sheet.style.display === 'none' ? 'block' : 'none';
     if (sheet.style.display === 'block') setTimeout(() => document.getElementById('addFriendUsernameInput').focus(), 80);
@@ -441,7 +430,7 @@
     document.getElementById('conversationView').style.display = 'none';
     document.getElementById('friendsListView').style.display = 'block';
     document.getElementById('fullChatHeaderTitle').textContent = 'Chats';
-    document.getElementById('fullChatHeaderSub').textContent = myPermanentUsername ? `You: @${myPermanentUsername}` : '';
+    document.getElementById('fullChatHeaderSub').textContent = myPermanentUsername ? `You: @${myPermanentUsername}` : 'No login required';
     renderFriendsList();
   };
 
@@ -478,7 +467,7 @@
   };
 
   window.triggerChatPhotoPicker = function() {
-    if (!getActiveUid() || !myPermanentUsername || !activeFriend || !currentRoomId) {
+    if (!myPermanentUsername || !activeFriend || !currentRoomId) {
       return showToast('Pehle kisi friend ki chat kholein');
     }
     const picker = document.getElementById('chatPhotoFileInput');
@@ -586,7 +575,7 @@
     document.getElementById('conversationView').style.display = 'flex';
     document.getElementById('chatBackToListBtn').style.display = 'flex';
     document.getElementById('fullChatHeaderTitle').textContent = '@' + target;
-    document.getElementById('fullChatHeaderSub').textContent = `Logged in as @${myPermanentUsername}`;
+    document.getElementById('fullChatHeaderSub').textContent = `You: @${myPermanentUsername}`;
 
     if (activeChatRef) activeChatRef.off();
     activeChatRef = db.ref('chats/' + currentRoomId + '/messages').limitToLast(60);
@@ -636,7 +625,7 @@
   };
 
   window.sendLiveChatMessage = async function() {
-    if (!getActiveUid() || !myPermanentUsername || !activeFriend || !currentRoomId) return showToast('Pehle kisi friend ko open karein');
+    if (!myPermanentUsername || !activeFriend || !currentRoomId) return showToast('Pehle kisi friend ko open karein');
     const inp = document.getElementById('chatMessageInput');
     const text = inp.value.trim();
     if (!text) return;
@@ -651,7 +640,7 @@
   };
 
   // =========================================================
-  // 4. LOCAL-ONLY AI MODE WITH NAME + CHAT MEMORY (100% LOCAL)
+  // 4. LOCAL-ONLY AI MODE WITH NAME + CHAT MEMORY
   // =========================================================
   function getLocalAIKey() {
     const uid = getActiveUid() || 'guest';
@@ -682,7 +671,7 @@
 
   function extractNameFromUserText(text) {
     const patterns = [
-      /(?:mera naam|my name is|i am|main|naam)\s+([a-zA-Z\u0900-\u097F]{2,25})/i
+      /(?:mera naam|my name is|i am|main|naam)\s+([a-zA-Zऀ-ॿ]{2,25})/i
     ];
     for (const re of patterns) {
       const m = text.match(re);
@@ -756,10 +745,11 @@
       btn.style.background = 'rgba(56,189,248,0.34)';
       document.getElementById('friendsListView').style.display = 'none';
       document.getElementById('conversationView').style.display = 'none';
+      document.getElementById('usernameSetupBox').style.display = 'none';
       document.getElementById('localAIModeView').style.display = 'flex';
       document.getElementById('chatBackToListBtn').style.display = 'flex';
       document.getElementById('fullChatHeaderTitle').textContent = 'AI Mode';
-      document.getElementById('fullChatHeaderSub').textContent = 'Name + Chat Memory • 100% Local Storage';
+      document.getElementById('fullChatHeaderSub').textContent = 'Name + Chat Memory • No login needed';
       renderLocalAIMessages();
       setTimeout(() => document.getElementById('localAIInput').focus(), 100);
     } else {
@@ -793,11 +783,22 @@
     const historySlice = list.slice(-10).map((item) => {
       const speaker = item.role === 'user' ? (savedName || 'User') : 'Assistant';
       return `${speaker}: ${item.text}`;
-    }).join('\n');
+    }).join('
+');
 
     const promptWithMemory = savedName
-      ? `The user's name is "${savedName}". Always remember their name and the conversation history below.\n\nConversation history:\n${historySlice}\n\nReply naturally and concisely.`
-      : `Remember and continue the conversation history below.\n\nConversation history:\n${historySlice}\n\nReply naturally and concisely.`;
+      ? `The user's name is "${savedName}". Always remember their name and the conversation history below.
+
+Conversation history:
+${historySlice}
+
+Reply naturally and concisely.`
+      : `Remember and continue the conversation history below.
+
+Conversation history:
+${historySlice}
+
+Reply naturally and concisely.`;
 
     try {
       const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(promptWithMemory)}`);
@@ -822,63 +823,61 @@
   };
 
   // =========================================================
-  // 5. USERNAME & MODAL CONTROLS
+  // 5. USERNAME & MODAL CONTROLS (NO LOGIN REQUIRED)
   // =========================================================
   async function loadMyPermanentUsername(user) {
-    if (!user) return '';
-    const cacheKey = 'ps_perm_uname_' + user.uid;
-    const cached = cleanUsername(localStorage.getItem(cacheKey));
+    const uid = (user && user.uid) ? user.uid : 'guest';
+    const cacheKey = 'ps_perm_uname_' + uid;
+    const guestKey = 'ps_perm_uname_guest';
+    const cached = cleanUsername(localStorage.getItem(cacheKey) || localStorage.getItem(guestKey));
     if (cached) {
       myPermanentUsername = cached;
       if (!getSavedUserName()) saveUserNameLocally(cached);
       startInboxWatcher(myPermanentUsername);
       return myPermanentUsername;
     }
-    try {
-      const snap = await db.ref('users/' + user.uid + '/username').get();
-      if (snap.exists() && snap.val()) {
-        myPermanentUsername = cleanUsername(snap.val());
-        localStorage.setItem(cacheKey, myPermanentUsername);
-        if (!getSavedUserName()) saveUserNameLocally(myPermanentUsername);
-        startInboxWatcher(myPermanentUsername);
-        return myPermanentUsername;
-      }
-    } catch (e) {}
+    if (user && user.uid && typeof db !== 'undefined') {
+      try {
+        const snap = await db.ref('users/' + user.uid + '/username').get();
+        if (snap.exists() && snap.val()) {
+          myPermanentUsername = cleanUsername(snap.val());
+          localStorage.setItem(cacheKey, myPermanentUsername);
+          localStorage.setItem(guestKey, myPermanentUsername);
+          if (!getSavedUserName()) saveUserNameLocally(myPermanentUsername);
+          startInboxWatcher(myPermanentUsername);
+          return myPermanentUsername;
+        }
+      } catch (e) {}
+    }
     return '';
   }
 
   window.claimPermanentUsername = async function() {
-    const uid = getActiveUid();
-    if (!uid) return showToast('Sign in first');
     const chosen = cleanUsername(document.getElementById('newPermanentUsernameInput').value);
     if (!chosen || chosen.length < 3) return showToast('Username kam se kam 3 letter ka ho');
-    try {
-      const existing = await db.ref('usernames/' + chosen).get();
-      if (existing.exists() && existing.val().uid !== uid) return showToast('Yeh username pehle se liya ja chuka hai');
-      const email = (typeof currentUser !== 'undefined' && currentUser && currentUser.email) ? currentUser.email : '';
-      await db.ref('usernames/' + chosen).set({ uid, email, createdAt: Date.now() });
-      await db.ref('users/' + uid + '/username').set(chosen);
-      myPermanentUsername = chosen;
-      localStorage.setItem('ps_perm_uname_' + uid, chosen);
-      if (!getSavedUserName()) saveUserNameLocally(chosen);
-      startInboxWatcher(chosen);
-      enableChatNotifications();
-      document.getElementById('usernameSetupBox').style.display = 'none';
-      await loadFriendsList();
-      showFriendsListView();
-      showToast('Username hamesha ke liye save: @' + chosen);
-    } catch (e) {
-      showToast('Username save nahi ho paya');
+
+    const uid = getActiveUid() || 'guest';
+    myPermanentUsername = chosen;
+    localStorage.setItem('ps_perm_uname_guest', chosen);
+    localStorage.setItem('ps_perm_uname_' + uid, chosen);
+    if (!getSavedUserName()) saveUserNameLocally(chosen);
+    startInboxWatcher(chosen);
+
+    if (uid !== 'guest' && typeof db !== 'undefined') {
+      try {
+        const email = (typeof currentUser !== 'undefined' && currentUser && currentUser.email) ? currentUser.email : '';
+        await db.ref('usernames/' + chosen).set({ uid, email, createdAt: Date.now() });
+        await db.ref('users/' + uid + '/username').set(chosen);
+      } catch (e) {}
     }
+
+    document.getElementById('usernameSetupBox').style.display = 'none';
+    await loadFriendsList();
+    showFriendsListView();
+    showToast('Username set: @' + chosen);
   };
 
   window.openLiveChatModal = async function() {
-    const uid = getActiveUid();
-    if (!uid) {
-      showToast('Sign in first to open Chat');
-      if (typeof openAccount === 'function') openAccount();
-      return;
-    }
     const dot = document.getElementById('chatUnreadDot');
     if (dot) dot.style.display = 'none';
     document.getElementById('liveChatOverlay').classList.add('open');
@@ -889,7 +888,7 @@
       return;
     }
 
-    const userObj = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : { uid };
+    const userObj = (typeof currentUser !== 'undefined' && currentUser) ? currentUser : { uid: 'guest' };
     await loadMyPermanentUsername(userObj);
     await loadFriendsList();
     if (!myPermanentUsername) {
@@ -898,7 +897,7 @@
       document.getElementById('localAIModeView').style.display = 'none';
       document.getElementById('usernameSetupBox').style.display = 'block';
       document.getElementById('fullChatHeaderTitle').textContent = 'Welcome';
-      document.getElementById('fullChatHeaderSub').textContent = 'Set permanent username';
+      document.getElementById('fullChatHeaderSub').textContent = 'Set username (no login needed)';
     } else {
       document.getElementById('usernameSetupBox').style.display = 'none';
       showFriendsListView();
@@ -911,7 +910,7 @@
   };
 
   // =========================================================
-  // 6. 3D TUTORIAL ON SLOW SINGLE CLICK OF PIXEL STUDIO
+  // 6. 3D TUTORIAL ON SLOW SINGLE CLICK
   // =========================================================
   const oldGuide = document.getElementById('pixel3DGuideOverlay');
   if (oldGuide) oldGuide.remove();
@@ -1019,24 +1018,15 @@
     });
   }
 
+  loadMyPermanentUsername({ uid: 'guest' });
+  loadFriendsList();
+
   if (typeof auth !== 'undefined' && auth) {
     auth.onAuthStateChanged((user) => {
       ensureTopChatButton();
-      if (user) {
-        try { localStorage.setItem('ps_last_auth_uid', user.uid); } catch (e) {}
-        loadMyPermanentUsername(user);
-        loadFriendsList();
-        applyLocalSettingsInstant();
-      } else {
-        myPermanentUsername = '';
-        friendsList = [];
-        if (inboxListenerRef) inboxListenerRef.off();
-      }
+      loadMyPermanentUsername(user || { uid: 'guest' });
+      loadFriendsList();
+      applyLocalSettingsInstant();
     });
-  }
-  if (typeof currentUser !== 'undefined' && currentUser) {
-    loadMyPermanentUsername(currentUser);
-    loadFriendsList();
-    applyLocalSettingsInstant();
   }
 })();
