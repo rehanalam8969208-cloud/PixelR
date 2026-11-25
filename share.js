@@ -1,4 +1,4 @@
-// --- FIREBASE AUTH, 5-MIN AUTO-DELETE SHARE & NO-CODE FUTURISTIC SECRET STUDIO ---
+// --- FIREBASE AUTH, 5-MIN AUTO-DELETE SHARE (NO LOGIN REQUIRED) & NO-CODE SECRET STUDIO ---
 const firebaseConfig = {
   apiKey: "AIzaSyCe9PY5mGrSOlzLOKByFrii_7_Vjlvv0AM",
   authDomain: "pixel-8e2df.firebaseapp.com",
@@ -26,7 +26,7 @@ function getSecretPass() {
   return localStorage.getItem("ps_secret_pass") || DEFAULT_SECRET_PASS;
 }
 
-// --- 1. NO-CODE FUTURISTIC SECRET STUDIO ENGINE ---
+// --- 1. NO-CODE FUTURISTIC SECRET STUDIO ENGINE (WORKS WITHOUT LOGIN) ---
 const STUDIO_STATE_KEY = 'ps_nocode_studio_v2';
 
 const STUDIO_THEMES = {
@@ -87,7 +87,6 @@ const STUDIO_THEMES = {
   "Pure Glass": clone(BASE_THEME)
 };
 
-// Readymade ON/OFF options — zero typing needed!
 const READYMADE_OPTIONS_CATALOG = [
   { key: 'btn_clear_key', label: 'Clear Secret Key Button', sub: 'Lock Tab mein key clear karne ka button' },
   { key: 'btn_clear_canvas', label: 'Reset / Clear Photo Button', sub: 'Lock Tab mein loaded photo hatane ka button' },
@@ -107,27 +106,8 @@ let studioState = JSON.parse(localStorage.getItem(STUDIO_STATE_KEY) || 'null') |
   activeTheme: "Pure Glass",
   glowPx: 18,
   fontScale: 100,
-  glassOverride: {
-    cardAlpha: 0.08,
-    glassBlur: 24,
-    borderAlpha: 0.16,
-    bgDim: 0.45,
-    radius: 26
-  },
-  toggles: {
-    btn_clear_key: false,
-    btn_clear_canvas: false,
-    btn_quick_chat: false,
-    btn_quick_settings: false,
-    btn_scroll_top: false,
-    btn_copy_codec: false,
-    hud_badge: false,
-    cyber_grid: false,
-    pulse_glow: false,
-    live_clock_pill: false,
-    compact_cards: false,
-    hide_meta_pill: false
-  },
+  glassOverride: { cardAlpha: 0.08, glassBlur: 24, borderAlpha: 0.16, bgDim: 0.45, radius: 26 },
+  toggles: {},
   bgPhotoUrl: "",
   broadcastBg: true,
   watermarkText: "",
@@ -164,8 +144,7 @@ document.body.appendChild(studioClockEl);
 
 setInterval(() => {
   if (studioClockEl.style.display !== 'none') {
-    const now = new Date();
-    studioClockEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    studioClockEl.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }
 }, 1000);
 
@@ -193,7 +172,6 @@ function renderStudioThemeButtons() {
     chip.onclick = () => {
       studioState.activeTheme = name;
       currentTheme = clone(STUDIO_THEMES[name]);
-      // Keep user's live glass & geometry sliders synced
       currentTheme.glass = { ...currentTheme.glass, ...studioState.glassOverride };
       applyTheme(currentTheme);
       saveStudioLocal();
@@ -545,34 +523,31 @@ function syncStudioInputsFromState() {
   setVal('studioHighlightPhrase', studioState.highlightPhrase || '');
 }
 
+// BINA LOGIN BHI sab users ke screen par push karega!
 async function saveAndPublishStudio(closeAfter) {
   applyReadymadeOptionsToUI();
   applyStudioVisuals();
-  if (currentUser) {
-    try {
-      await db.ref('live_update').set({
-        studioState: {
-          activeTheme: studioState.activeTheme,
-          glowPx: studioState.glowPx,
-          fontScale: studioState.fontScale,
-          glassOverride: studioState.glassOverride,
-          toggles: studioState.toggles,
-          bgPhotoUrl: studioState.broadcastBg ? studioState.bgPhotoUrl : '',
-          broadcastBg: studioState.broadcastBg,
-          watermarkText: studioState.watermarkText,
-          highlightColor: studioState.highlightColor,
-          highlightTextColor: studioState.highlightTextColor,
-          highlightPhrase: studioState.highlightPhrase,
-          highlightEnabled: studioState.highlightEnabled
-        },
-        updatedAt: Date.now()
-      });
-      showToast('Sab users ke liye har jagah publish ho gaya!');
-    } catch (e) {
-      showToast('Local mein save ho gaya (Cloud rule check karein)');
-    }
-  } else {
-    showToast('Local mein apply ho gaya! (Sign in karke push karein)');
+  try {
+    await db.ref('live_update').set({
+      studioState: {
+        activeTheme: studioState.activeTheme,
+        glowPx: studioState.glowPx,
+        fontScale: studioState.fontScale,
+        glassOverride: studioState.glassOverride,
+        toggles: studioState.toggles,
+        bgPhotoUrl: studioState.broadcastBg ? studioState.bgPhotoUrl : '',
+        broadcastBg: studioState.broadcastBg,
+        watermarkText: studioState.watermarkText,
+        highlightColor: studioState.highlightColor,
+        highlightTextColor: studioState.highlightTextColor,
+        highlightPhrase: studioState.highlightPhrase,
+        highlightEnabled: studioState.highlightEnabled
+      },
+      updatedAt: Date.now()
+    });
+    showToast('Bina login sab users ke screen par publish ho gaya!');
+  } catch (e) {
+    showToast('Local mein apply ho gaya (DB rule check karein)');
   }
   if (closeAfter) closeSecret();
 }
@@ -648,7 +623,7 @@ function verifyPassPopup() {
 function showSecretModal() {
   document.getElementById("newSecretPassInput").value = getSecretPass();
   document.getElementById("adminStatusEmail").textContent =
-    currentUser ? `Signed in: ${currentUser.email}` : 'Local Mode (Sign in to push to all users)';
+    currentUser ? `Signed in: ${currentUser.email}` : 'No-Login Live Push Active';
   syncStudioInputsFromState();
   renderStudioThemeButtons();
   renderReadymadeOptionToggles();
@@ -692,7 +667,7 @@ async function cleanupExpiredShares() {
   } catch (e) {}
 }
 
-// --- 3. AUTHENTICATION & CLOUD BACKUP ---
+// --- 3. AUTHENTICATION (OPTIONAL — SHARE & STUDIO WORK WITHOUT LOGIN) ---
 auth.onAuthStateChanged((user) => {
   currentUser = user;
   const dot = document.getElementById('authDot');
@@ -701,22 +676,31 @@ auth.onAuthStateChanged((user) => {
   const shareLocked = document.getElementById('shareLockedBox');
   const shareMain = document.getElementById('shareMainBox');
 
+  if (shareLocked) shareLocked.style.display = 'none';
+  if (shareMain) shareMain.style.display = 'block';
+  cleanupExpiredShares();
+  restorePendingShare();
+
   if (user) {
     dot.classList.add('online');
     loggedOut.style.display = 'none';
     loggedIn.style.display = 'block';
     document.getElementById('userEmailLabel').textContent = user.email;
-    shareLocked.style.display = 'none';
-    shareMain.style.display = 'block';
-    cleanupExpiredShares();
-    restorePendingShare();
   } else {
     dot.classList.remove('online');
     loggedOut.style.display = 'block';
     loggedIn.style.display = 'none';
-    shareLocked.style.display = 'block';
-    shareMain.style.display = 'none';
   }
+});
+
+// Ensure share works immediately even before auth resolves
+document.addEventListener('DOMContentLoaded', () => {
+  const shareLocked = document.getElementById('shareLockedBox');
+  const shareMain = document.getElementById('shareMainBox');
+  if (shareLocked) shareLocked.style.display = 'none';
+  if (shareMain) shareMain.style.display = 'block';
+  cleanupExpiredShares();
+  restorePendingShare();
 });
 
 function openAccount() { document.getElementById('accountOverlay').classList.add('open'); }
@@ -755,7 +739,7 @@ async function doLogout() {
 }
 
 async function syncThemesToCloud() {
-  if (!currentUser) return showToast('Sign in first');
+  if (!currentUser) return showToast('Cloud backup ke liye optional Sign In karein');
   try {
     await db.ref('users/' + currentUser.uid + '/themes').set({
       folders: themeFolders,
@@ -769,7 +753,7 @@ async function syncThemesToCloud() {
 }
 
 async function loadThemesFromCloud() {
-  if (!currentUser) return showToast('Sign in first');
+  if (!currentUser) return showToast('Cloud load ke liye optional Sign In karein');
   try {
     const snap = await db.ref('users/' + currentUser.uid + '/themes').get();
     if (!snap.exists()) return showToast('No cloud backup found');
@@ -790,7 +774,7 @@ async function loadThemesFromCloud() {
   }
 }
 
-// --- 4. 5-MINUTE AUTO-DELETE FILE SHARE ---
+// --- 4. 5-MINUTE AUTO-DELETE FILE SHARE (NO LOGIN REQUIRED) ---
 let selectedShareFile = null;
 
 document.getElementById('shareFileInput').addEventListener('change', (e) => {
@@ -840,12 +824,14 @@ async function restorePendingShare() {
     try { await db.ref('shares/' + saved.code).remove(); } catch {}
     return;
   }
-  const snap = await db.ref('shares/' + saved.code).get();
-  if (snap.exists()) {
-    startShareCountdown(saved.code, saved.expiresAt);
-  } else {
-    localStorage.removeItem('ps_pending_share');
-  }
+  try {
+    const snap = await db.ref('shares/' + saved.code).get();
+    if (snap.exists()) {
+      startShareCountdown(saved.code, saved.expiresAt);
+    } else {
+      localStorage.removeItem('ps_pending_share');
+    }
+  } catch (e) {}
 }
 
 async function deleteActiveShareNow() {
@@ -859,12 +845,11 @@ async function deleteActiveShareNow() {
 }
 
 function uploadShareFile() {
-  if (!currentUser) return showToast('Sign in first');
   if (!selectedShareFile) return showToast('Select a file first');
 
   const btn = document.getElementById('btnSendShare');
   btn.style.opacity = '0.5';
-  showToast('Uploading to cloud...');
+  showToast('Uploading (5 min auto-delete)...');
 
   const reader = new FileReader();
   reader.onload = async (ev) => {
@@ -885,7 +870,7 @@ function uploadShareFile() {
       startShareCountdown(code, expiresAt);
       showToast(`Code ready (5 min timer): ${code}`);
     } catch (err) {
-      showToast('Upload failed');
+      showToast('Upload failed (DB rules check karein)');
     } finally {
       btn.style.opacity = '1';
     }
@@ -899,7 +884,6 @@ function copyShareCode() {
 }
 
 async function receiveShareFile() {
-  if (!currentUser) return showToast('Sign in first');
   const code = document.getElementById('receiveCodeInput').value.trim();
   if (code.length !== 6) return showToast('Enter 6-digit code');
 
