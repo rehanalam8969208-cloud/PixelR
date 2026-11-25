@@ -144,21 +144,12 @@
     </button>
   </div>
 
-  <!-- TAB 3: 5-MIN AUTO-DELETE SHARE -->
+  <!-- TAB 3: 5-MIN AUTO-DELETE SHARE (BINA LOGIN BHI CHALEGA) -->
   <div id="tab-share" class="panel-card">
-    <div id="shareLockedBox" style="display:block; text-align:center; padding: 12px 4px;">
-      <div class="section-label" style="text-align:center;">Sign In Required</div>
-      <p style="font-size:13px; color:var(--text-secondary); margin:0 0 14px 0;">
-        Login to send & receive files with 5-minute auto-delete.
-      </p>
-      <button class="btn" onclick="openAccount()">
-        <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-        <span>Sign In / Create Account</span>
-      </button>
-    </div>
+    <div id="shareLockedBox" style="display:none;"></div>
 
-    <div id="shareMainBox" style="display:none;">
-      <div class="section-label">Send File (Auto-Wipes in 5 Mins)</div>
+    <div id="shareMainBox" style="display:block;">
+      <div class="section-label">Send File (Auto-Wipes in 5 Mins • No Login Needed)</div>
 
       <label for="shareFileInput" class="upload-btn">
         <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -240,7 +231,7 @@
     </div>
   </div>
 
-  <!-- NO-CODE FUTURISTIC SECRET STUDIO (WITH LIVE GLASS & GEOMETRY + READYMADE ON/OFF OPTIONS) -->
+  <!-- NO-CODE FUTURISTIC SECRET STUDIO -->
   <div id="secretOverlay" class="modal-overlay">
     <div class="modal-shell">
       <div class="modal-header">
@@ -251,8 +242,8 @@
       </div>
 
       <div class="profile-box" style="padding:10px 14px; margin-bottom:12px;">
-        <div class="profile-email" id="adminStatusEmail" style="font-size:12.5px; margin-bottom:2px;">Local + Cloud Ready</div>
-        <div class="profile-sub">100% No-Code • Themes, Readymade On/Off Options, Glass & Geometry, BG Push</div>
+        <div class="profile-email" id="adminStatusEmail" style="font-size:12.5px; margin-bottom:2px;">No-Login Live Mode Active</div>
+        <div class="profile-sub">100% No-Code • Sabke screen par bina login bhi push hoga</div>
       </div>
 
       <div class="cat-bar">
@@ -283,7 +274,7 @@
         </div>
       </div>
 
-      <!-- TAB 2: READYMADE ON/OFF OPTIONS (NO TYPING NEEDED) -->
+      <!-- TAB 2: READYMADE ON/OFF OPTIONS -->
       <div id="stab-options" class="cat-page">
         <div class="section-label">Readymade Options (Bas On / Off Karein)</div>
         <p style="font-size:11.5px; color:var(--text-secondary); margin:0 0 10px 4px;">
@@ -383,18 +374,21 @@
     </div>
   </div>
 
-  <!-- ACCOUNT / LOGIN MODAL -->
+  <!-- ACCOUNT / LOGIN MODAL (OPTIONAL) -->
   <div id="accountOverlay" class="modal-overlay">
     <div class="modal-shell">
       <div class="modal-header">
-        <span class="modal-title">Account</span>
+        <span class="modal-title">Account (Optional)</span>
         <button class="icon-btn" onclick="closeAccount()" aria-label="Close">
           <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
 
       <div id="authLoggedOut">
-        <div class="section-label">Firebase Cloud Account</div>
+        <div class="section-label">Optional Cloud Account</div>
+        <p style="font-size:12px; color:var(--text-secondary); margin:0 0 12px 4px;">
+          Bina login bhi Share, Studio Push aur Chat chalega. Login sirf optional theme backup ke liye hai.
+        </p>
         <div class="input-wrap">
           <span class="input-icon">
             <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
